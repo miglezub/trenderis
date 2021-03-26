@@ -13,12 +13,23 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Route::get('/', function () {
+//     return view('dashboard');
+// })->middleware(['auth'])->name('dashboard');;
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth'])->name('dashboard');
+// Route::get('/dashboard', function () {
+//     return view('dashboard');
+// })->middleware(['auth'])->name('dashboard');
+
+
+// Route::get('/texts', 'App\Http\Controllers\TextController@view')->middleware('auth');
 
 require __DIR__.'/auth.php';
+
+Route::prefix('api')->middleware('auth')->group(function () {
+    Route::resource('texts', App\Http\Controllers\TextController::class);
+});
+
+Route::get('{any}', function () {
+    return view('layouts.vue');
+})->where('any', '.*');
