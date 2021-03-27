@@ -26,4 +26,5 @@ return [
     'register'          => 'Registruotis',
     'login'             => 'Jau esate prisiregistravęs?',
     'required'          => 'Prašome užpildyti šį lauką!',
+    'errors'            => 'Įvyko klaida:',
 ];
