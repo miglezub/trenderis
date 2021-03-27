@@ -14,12 +14,13 @@ body {
 }
 
 .btn-default {
-    background-color: $p1-dark-blue;
-    border-color: $p1-dark-blue;
+    background-color: $p1-blue;
+    border-color: $p1-blue;
     color: #fff;
     &:hover, &:active {
         background-color: $p1-light-blue;
         border-color: $p1-light-blue;
+        color: #fff;
     }
 }
 
@@ -331,3 +332,58 @@ svg {
         transform: translateX(50%);
     }
 }
+//switch
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+    input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        &:checked {
+            &+ .slider {
+                background-color: $p1-dark-blue;
+                &:before {
+                    -webkit-transform: translateX(13px);
+                    -ms-transform: translateX(13px);
+                    transform: translateX(13px);
+                }
+            }
+        }
+        &:focus {
+            &+ .slider {
+                box-shadow: 0 0 1px $p1-blue;
+            }
+        }
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      -webkit-transition: .4s;
+      transition: .4s;
+      &:before {
+          position: absolute;
+          content: "";
+          height: 13px;
+          width: 13px;
+          left: 4px;
+          bottom: 3.5px;
+          background-color: white;
+          -webkit-transition: .4s;
+          transition: .4s;
+      }
+      &.round {
+          border-radius: 17px;
+          &:before {
+              border-radius: 50%;
+          }
+      }
+    }
+  }  
