@@ -12,6 +12,12 @@ class Text extends Model
         'original_text', 
         'use_word2vec',
         'use_idf', 
-        'trained_word2vec'
+        'trained_word2vec',
+        'language_id'
     ]; 
+
+    public function language()
+    {
+        return $this->belongsTo(Language::class, 'language_id');
+    }
 }
