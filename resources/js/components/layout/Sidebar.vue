@@ -15,13 +15,10 @@
                 </a>
                 <ul class="collapse list-unstyled" id="homeSubmenu">
                     <li>
-                        <a href="/texts">Tekstų sąrašas</a>
+                        <router-link :to="{name: 'texts'}">Tekstų sąrašas</router-link>
                     </li>
                     <li>
-                        <a href="#">Home 2</a>
-                    </li>
-                    <li>
-                        <a href="#">Home 3</a>
+                        <router-link :to="{name: 'createText'}">Pridėti tekstą</router-link>
                     </li>
                 </ul>
             </li>
