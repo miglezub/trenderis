@@ -11,6 +11,13 @@ class TextController extends Controller
     public function index() {
         $user = Auth::user();
         $texts = $user->texts()->get()->toArray();
+        foreach($texts as $key => $text) {
+            if(strlen($text['original_text']) > 200) {
+                $texts[$key]['original_text'] = nl2br(substr($text['original_text'], 0, strpos($text['original_text'], " " , 200))) . " ...";
+            } else {
+                $texts[$key]['original_text'] = nl2br($text['original_text']);
+            }
+        }
         return array_reverse($texts);
     }
 
@@ -34,5 +41,28 @@ class TextController extends Controller
         $text = $user->texts()->find($id);
         $text->delete();
         return response()->json('Text deleted!');
+    }
+
+    public function store()
+    {
+        $data=request()->validate([
+            'original_text' => 'required',
+            'language_id' => 'required',
+            'use_idf' => 'nullable|boolean',
+            'use_word2vec' => 'nullable|boolean',
+        ]);
+
+        $newText = auth()->user()->texts()->create([
+            'original_text' => html_entity_decode($data['original_text']),
+            'language_id' => $data['language_id'],
+            'use_idf' => $data['use_idf'],
+            'use_word2vec' => $data['use_word2vec'],
+        ]);
+
+        if($newText) {
+            return response()->json('Success');
+        } else {
+            return response()->json('Error');
+        }
     }
 }
