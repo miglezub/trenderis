@@ -1,5 +1,5 @@
 import AllTexts from './components/text/AllTexts.vue';
-import EditText from './components/text/EditText.vue';
+import AddText from './components/text/AddText.vue';
 import PageNotFound from './components/PageNotFound.vue';
  
 export const routes = [
@@ -14,9 +14,9 @@ export const routes = [
         component: AllTexts
     },
     {
-        name: 'edit',
-        path: '/text/edit/:id',
-        component: EditText
+        name: 'createText',
+        path: '/text/create',
+        component: AddText
     },
     { path: "*", component: PageNotFound }
 ];
