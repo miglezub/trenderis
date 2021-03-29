@@ -27,7 +27,9 @@ use Illuminate\Support\Facades\Route;
 require __DIR__.'/auth.php';
 
 Route::prefix('api')->middleware('auth')->group(function () {
+    Route::get('/texts/filter', 'App\Http\Controllers\TextController@filter');
     Route::resource('texts', App\Http\Controllers\TextController::class);
+    Route::post('/analyse/{id}', 'App\Http\Controllers\TextController@analyse');
 });
 
 Route::get('{any}', function () {
