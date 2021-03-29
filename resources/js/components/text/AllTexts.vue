@@ -9,35 +9,47 @@
                         <date-picker 
                             v-model="date" 
                             type="date" range 
-                            placeholder="Nurodykite datas">
+                            placeholder="Nurodykite datas"
+                            :disabled-date="disabledTomorrowAndLater">
                         </date-picker>
                     </div>
                     <button type="submit" class="btn btn-primary d-inline-block">Filtruoti</button>
                 </form>
-                <router-link :to="{name: 'createText'}" class="btn btn-default float-right">Pridėti tekstą</router-link>
+                <router-link :to="{name: 'createText'}" class="btn btn-success float-right">Pridėti tekstą</router-link>
             </div>
-    
-            <table class="table">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Tekstas</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr v-for="text in texts" :key="text.id">
-                    <td>{{ text.id }}</td>
-                    <td v-html="text.original_text"></td>
-                    <td>
-                        <div class="btn-group" role="group">
-                            <router-link :to="{name: 'edit', params: { id: text.id }}" class="btn btn-default">Redaguoti</router-link>
-                            <button class="btn btn-danger" @click="triggerDelete(text.id)">Ištrinti</button>
-                        </div>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+
+            <b-table
+                id="texts-table"
+                striped hover
+                :items="texts"
+                :fields="fields"
+                :per-page="perPage"
+                :current-page="currentPage"
+                :busy.sync="isBusy"
+                >
+                <template v-slot:cell(original_text)="data">
+                    <div v-html="data.item.original_text"></div>
+                </template>
+                <template v-slot:cell(buttons)="data">
+                    <b-button-group class="float-right">
+                        <router-link :to="{name: 'showText', params: { id: data.item.id }}" class="btn btn-primary">Peržiūrėti</router-link>
+                        <b-button class="btn btn-danger" @click="triggerDelete(data.item.id)">Ištrinti</b-button>
+                    </b-button-group>
+                </template>
+                <template v-slot:table-busy>
+                    <div class="text-center text-orange my-5">
+                            <b-spinner class="align-middle" type="grow"></b-spinner>
+                            <strong>Kraunasi...</strong>
+                    </div>
+                </template>
+            </b-table>
+            <b-pagination
+                v-model="currentPage"
+                :total-rows="rows"
+                :per-page="perPage"
+                aria-controls="texts-table"
+                align="right"
+                ></b-pagination>
         </div>
         <delete-confirm title="Teksto ištrynimas" message="Ar tikrai norite ištrinti tekstą?<br>Pašalinus tekstą bus ištrinti ir jo analizės rezultatai." :id="deleteId" v-on:approvedDeletion="deleteText"></delete-confirm>
     </div>
@@ -46,6 +58,7 @@
 <script>
     import DatePicker from 'vue2-datepicker';
     import 'vue2-datepicker/index.css';
+    import 'vue2-datepicker/locale/lt';
     import DeleteConfirm from '../layout/DeleteConfirm.vue';
     export default {
         components: { DatePicker, DeleteConfirm },
@@ -53,7 +66,43 @@
             return {
                 texts: [],
                 date: [],
-                deleteId: 0
+                deleteId: 0,
+                perPage: 8,
+                currentPage: 1,
+                languages: {},
+                isBusy: true,
+                fields: [
+                    {
+                        key: 'original_text',
+                        label: 'Tekstas',
+                        sortable: false
+                    },
+                    {
+                        key: 'language_id',
+                        label: 'Kalba',
+                        formatter: value => {
+                            if(this.languages && this.languages[value - 1]) {
+                                return this.languages[value - 1].name;
+                            } else {
+                                return "";
+                            }
+                        },
+                        sortable: true
+                    },
+                    {
+                        key: 'created_at',
+                        label: 'Data',
+                        formatter: value => {
+                            return value.split("T")[0];
+                        },
+                        sortable: true
+                    },
+                    {
+                        key: 'buttons',
+                        label: '',
+                        sortable: false
+                    },
+                ],
             }
         },
         created() {
@@ -61,7 +110,13 @@
                 .get('/api/texts')
                 .then(response => {
                     this.texts = response.data;
+                    this.loadLanguages();
                 });
+        },
+        computed: {
+            rows() {
+                return this.texts.length
+            }
         },
         methods: {
             triggerDelete(id) {
@@ -78,12 +133,37 @@
                     });
             },
             filterList() {
+                this.isBusy = true;
+                const date1 = new Date();
+                date1.setTime(this.date[0].getTime() + 3600 * 1000 * 26 - 1);
+                const date2 = new Date();
+                date2.setTime(this.date[1].getTime() + 3600 * 1000 * 26 - 1);
                 this.axios
-                    .get('/api/texts')
+                    .get('/api/texts/filter', {
+                        params: {
+                            date1: date1,
+                            date2: date2
+                        }
+                    })
                     .then(response => {
                         this.texts = response.data;
+                        this.isBusy = false;
                     });
-            }
+            },
+            loadLanguages() {
+                this.axios
+                    .get('/api/languages')
+                    .then(response => {
+                        this.languages = response.data;
+                        this.isBusy = false;
+                    });
+            },
+            disabledTomorrowAndLater(date) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                return date > today;
+            },
         }
     }
 </script>
