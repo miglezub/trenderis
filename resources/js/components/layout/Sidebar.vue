@@ -8,6 +8,20 @@
         </div> -->
 
         <ul class="list-unstyled components">
+            <li>
+                <a href="#apiKeySubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                    <i class="fas fa-key"></i>
+                    API raktai
+                </a>
+                <ul class="collapse list-unstyled" id="apiKeySubmenu">
+                    <li>
+                        <router-link :to="{name: 'texts'}">API raktų sąrašas</router-link>
+                    </li>
+                    <li>
+                        <router-link :to="{name: 'createText'}">Pridėti API raktą</router-link>
+                    </li>
+                </ul>
+            </li>
             <li class="active">
                 <a href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                     <i class="fas fa-file-alt"></i>
@@ -24,49 +38,16 @@
             </li>
             <li>
                 <a href="#">
-                    <i class="fas fa-briefcase"></i>
-                    About
-                </a>
-                <a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
-                    <i class="fas fa-copy"></i>
-                    Pages
-                </a>
-                <ul class="collapse list-unstyled" id="pageSubmenu">
-                    <li>
-                        <a href="#">Page 1</a>
-                    </li>
-                    <li>
-                        <a href="#">Page 2</a>
-                    </li>
-                    <li>
-                        <a href="#">Page 3</a>
-                    </li>
-                </ul>
-            </li>
-            <li>
-                <a href="#">
-                    <i class="fas fa-image"></i>
-                    Portfolio
-                </a>
-            </li>
-            <li>
-                <a href="#">
-                    <i class="fas fa-question"></i>
-                    FAQ
-                </a>
-            </li>
-            <li>
-                <a href="#">
-                    <i class="fas fa-paper-plane"></i>
-                    Contact
+                    <i class="far fa-chart-bar"></i>
+                    Grafikai
                 </a>
             </li>
         </ul>
 
-        <ul class="list-unstyled CTAs">
+        <!-- <ul class="list-unstyled CTAs">
             <li>
                 <a href="https://bootstrapious.com/tutorial/files/sidebar.zip" class="download">Download source</a>
             </li>
-        </ul>
+        </ul> -->
     </nav>
 </template>
