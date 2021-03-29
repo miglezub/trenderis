@@ -72,9 +72,13 @@ import { required, minValue } from "vuelidate/lib/validators";
 
                 this.axios
                     .post('/api/texts', this.text)
-                    .then(response => (
-                        this.$router.push({ name: 'texts' })
-                    ))
+                    .then(function(response) {
+                        if(response.error) {
+                            console.log(response.error);
+                        } else {
+                            this.$router.push({ name: 'texts' })
+                        }
+                    })
                     .catch(err => console.log(err))
                     .finally(() => this.loading = false)
             },
