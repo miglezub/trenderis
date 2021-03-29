@@ -7,7 +7,7 @@ body {
     background-color: $p1-dark-blue;
     border-color: $p1-dark-blue;
     color: #fff;
-    &:hover, &:active {
+    &:hover, &:active, &:focus {
         background-color: $p1-blue;
         border-color: $p1-blue;
     }
@@ -17,7 +17,7 @@ body {
     background-color: $p1-blue;
     border-color: $p1-blue;
     color: #fff;
-    &:hover, &:active {
+    &:hover, &:active, &:focus {
         background-color: $p1-light-blue;
         border-color: $p1-light-blue;
         color: #fff;
@@ -27,7 +27,7 @@ body {
 .btn-success {
     background-color: $p1-success;
     border-color: $p1-success;
-    &:hover, &:active {
+    &:hover, &:active, &:focus {
         background-color: $p1-success-hover;
         border-color: $p1-success-hover;
     }
@@ -36,10 +36,14 @@ body {
 .btn-danger {
     background-color: $p1-orange;
     border-color: $p1-orange;
-    &:hover, &:active {
+    &:hover, &:active, &:focus {
         background-color: $p1-light-orange;
         border-color: $p1-light-orange;
     }
+}
+
+.text-orange {
+    color: $p1-orange;
 }
 
 .card {
@@ -344,7 +348,7 @@ svg {
         height: 0;
         &:checked {
             &+ .slider {
-                background-color: $p1-dark-blue;
+                background-color: $p1-orange;
                 &:before {
                     -webkit-transform: translateX(13px);
                     -ms-transform: translateX(13px);
@@ -354,7 +358,7 @@ svg {
         }
         &:focus {
             &+ .slider {
-                box-shadow: 0 0 1px $p1-blue;
+                box-shadow: 0 0 1px $p1-light-orange;
             }
         }
     }
@@ -387,3 +391,14 @@ svg {
       }
     }
   }  
+  .pagination {
+      .page-item {
+          color: $p1-dark-blue;
+          &.active {
+              .page-link {
+                background-color: $p1-dark-blue;
+                border-color: $p1-dark-blue;
+              }
+          }
+      }
+  }
