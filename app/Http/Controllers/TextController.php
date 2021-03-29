@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\Text;
-
+use App\Models\TextAnalysis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -10,59 +10,147 @@ class TextController extends Controller
 {
     public function index() {
         $user = Auth::user();
-        $texts = $user->texts()->get()->toArray();
-        foreach($texts as $key => $text) {
-            if(strlen($text['original_text']) > 200) {
-                $texts[$key]['original_text'] = nl2br(substr($text['original_text'], 0, strpos($text['original_text'], " " , 200))) . " ...";
-            } else {
-                $texts[$key]['original_text'] = nl2br($text['original_text']);
+        if($user) {
+            $texts = $user->texts()->get()->toArray();
+            foreach($texts as $key => $text) {
+                if(strlen($text['original_text']) > 200) {
+                    $texts[$key]['original_text'] = nl2br(substr($text['original_text'], 0, strpos($text['original_text'], " " , 200))) . " ...";
+                } else {
+                    $texts[$key]['original_text'] = nl2br($text['original_text']);
+                }
             }
+            return array_reverse($texts);
+        } else {
+            return redirect('/login');
         }
-        return array_reverse($texts);
+    }
+
+    public function filter(Request $request)
+    {
+        $user = Auth::user();
+        if($user) {
+            $texts = $user->texts();
+            $textsQuery = $user->texts();
+            if($request->date1) {
+                $textsQuery->whereDate('created_at', '>=', $request->date1);
+            }
+            if($request->date1) {
+                $textsQuery->whereDate('created_at', '<=', $request->date2);
+            }
+            $texts = $textsQuery->get()->toArray();
+            foreach($texts as $key => $text) {
+                if(strlen($text['original_text']) > 200) {
+                    $texts[$key]['original_text'] = nl2br(substr($text['original_text'], 0, strpos($text['original_text'], " " , 200))) . " ...";
+                } else {
+                    $texts[$key]['original_text'] = nl2br($text['original_text']);
+                }
+            }
+            return array_reverse($texts);
+        } else {
+            return redirect('/login');
+        }
     }
 
     public function show($id) {
         $user = Auth::user();
-        $text = $user->texts()->find($id);
-        return response()->json($text);
+        if($user) {
+            $json = array();
+            $text = $user->texts()->find($id);
+            $text['original_text'] = nl2br($text['original_text']);
+            $analysis = $text->text_analysis->last();
+            $json['results'] = unserialize($analysis->results);
+            $json['text'] = $text;
+            return response()->json($json);
+        } else {
+            return redirect('/login');
+        }
     }
 
     public function update($id, Request $request)
     {
         $user = Auth::user();
-        $text = $user->texts()->find($id);
-        $text->update($request->all());
-        return response()->json('Text updated!');
+        if($user) {
+            $text = $user->texts()->find($id);
+            $text->update($request->all());
+            return response()->json(['success' => 'Tekstas atnaujintas']);
+        } else {
+            return redirect('/login');
+        }
     }
 
     public function destroy($id)
     {
         $user = Auth::user();
-        $text = $user->texts()->find($id);
-        $text->delete();
-        return response()->json('Text deleted!');
+        if($user) {
+            $text = $user->texts()->find($id);
+            foreach($text->text_analysis as $analysis) {
+                $analysis->delete();
+            }
+            $text->delete();
+            return response()->json(['success' => 'Tekstas ištrintas']);
+        } else {
+            return redirect('/login');
+        }
     }
 
     public function store()
     {
-        $data=request()->validate([
-            'original_text' => 'required',
-            'language_id' => 'required',
-            'use_idf' => 'nullable|boolean',
-            'use_word2vec' => 'nullable|boolean',
-        ]);
-
-        $newText = auth()->user()->texts()->create([
-            'original_text' => html_entity_decode($data['original_text']),
-            'language_id' => $data['language_id'],
-            'use_idf' => $data['use_idf'],
-            'use_word2vec' => $data['use_word2vec'],
-        ]);
-
-        if($newText) {
-            return response()->json('Success');
+        if(auth()->user()) {
+            $data = request()->validate([
+                'original_text' => 'required',
+                'language_id' => 'required',
+                'use_idf' => 'nullable|boolean',
+                'use_word2vec' => 'nullable|boolean',
+            ]);
+    
+            $newText = auth()->user()->texts()->create([
+                'original_text' => html_entity_decode($data['original_text']),
+                'language_id' => $data['language_id'],
+                'use_idf' => $data['use_idf'],
+                'use_word2vec' => $data['use_word2vec'],
+            ]);
+    
+            if($newText) {
+                $analysis = $newText->text_analysis()->create([
+                    'lemmatized_text' => '',
+                    'results' => '',
+                    'use_idf' => $data['use_idf'],
+                    'use_word2vec' => $data['use_word2vec']
+                ]);
+                TextAnalysisController::analyse($analysis->id);
+                return response()->json(['success' => 'Tekstas pridėtas sėkmingai']);
+            } else {
+                return response()->json(['error' => 'Įvyko klaida. Tekstas nebuvo pridėtas. Patikrinkite, ar nurodyti visi privalomi parametrai.']);
+            }
         } else {
-            return response()->json('Error');
+            return redirect('/login');
+        }
+    }
+
+    public function analyse($id)
+    {
+        $user = Auth::user();
+        if($user) {
+            $text = $user->texts()->find($id);
+            if($text) {
+                $data=request()->validate([
+                    'language_id' => 'required',
+                    'use_idf' => 'nullable|boolean',
+                ]);
+                $text->update($data);
+                $analysis = $text->text_analysis()->create([
+                    'lemmatized_text' => '',
+                    'results' => '',
+                    'use_idf' => $data['use_idf'],
+                    'use_word2vec' => $text->use_word2vec
+                ]);
+                TextAnalysisController::analyse($analysis->id, $user->id);
+                return response()->json(['success' => 'Analizės rezultatai atnaujinti.']);
+            } else {
+                return response()->json(['error' => 'Įvyko klaida. Analizės rezultatai nebuvo atnaujinti.']);
+            }
+        } else {
+            return redirect('/login');
         }
     }
 }
