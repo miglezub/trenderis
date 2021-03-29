@@ -14,7 +14,8 @@ import VueRouter from 'vue-router';
 import axios from 'axios';
 import { routes } from './routes';
 import Vue from 'vue';
-import Vuelidate from 'vuelidate'
+import Vuelidate from 'vuelidate';
+import { BootstrapVue } from 'bootstrap-vue';
 
 /**
  * The following block of code may be used to automatically register your
@@ -38,7 +39,8 @@ Vue.component('sidebar', require('./components/layout/Sidebar.vue').default);
 
 Vue.use(VueRouter);
 Vue.use(VueAxios, axios);
-Vue.use(Vuelidate)
+Vue.use(Vuelidate);
+Vue.use(BootstrapVue);
 
 const router = new VueRouter({
     mode: 'history',
