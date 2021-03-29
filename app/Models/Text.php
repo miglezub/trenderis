@@ -20,4 +20,9 @@ class Text extends Model
     {
         return $this->belongsTo(Language::class, 'language_id');
     }
+
+    public function text_analysis()
+    {
+        return $this->hasMany(TextAnalysis::class);
+    }
 }
