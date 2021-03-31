@@ -9,9 +9,6 @@
         <!-- Session Status -->
         <x-auth-session-status class="mb-4" :status="session('status')" />
 
-        <!-- Validation Errors -->
-        <x-auth-validation-errors class="mb-4" :errors="$errors" />
-
         <form method="POST" action="{{ route('login') }}">
             @csrf
 
@@ -19,17 +16,23 @@
             <div>
                 <x-label for="email" :value="__('auth.email')" />
 
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
+                <x-input id="email" class="block mt-1 w-full {{ $errors->first('email') ? 'border-red-300 focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50' : 'focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50'}}" type="text" name="email" :value="old('email')" autofocus />
+                @if($errors->first('email'))
+                <div class="text-red-600">{{ $errors->first('email') }}</div>
+                @endif
             </div>
 
             <!-- Password -->
             <div class="mt-4">
                 <x-label for="password" :value="__('auth.password1')" />
 
-                <x-input id="password" class="block mt-1 w-full"
+                <x-input id="password" class="block mt-1 w-full {{ $errors->first('password') ? 'border-red-300 focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50' : 'focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50'}}"
                                 type="password"
                                 name="password"
-                                required autocomplete="current-password" />
+                                autocomplete="current-password" />
+                @if($errors->first('password'))
+                    <div class="text-red-600">{{ $errors->first('password') }}</div>
+                @endif
             </div>
 
             <!-- Remember Me -->

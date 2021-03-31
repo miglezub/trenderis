@@ -14,7 +14,8 @@ return [
     */
 
     'failed'            => 'Nurodyti blogi prisijungimo duomenys.',
-    'password'          => 'Neteisingas slaptažodis.',
+    'password'          => 'Slaptažodis',
+    'password_error'    => 'Neteisingas slaptažodis.',
     'throttle'          => 'Per daug nesėkmingų prisijungimo bandymų. Prašome pabandyti po :seconds sekundžių.',
     'email'             => 'El. paštas.',
     'password1'         => 'Slaptažodis',
@@ -27,4 +28,5 @@ return [
     'login'             => 'Jau esate prisiregistravęs?',
     'required'          => 'Prašome užpildyti šį lauką!',
     'errors'            => 'Įvyko klaida:',
+    'log_out'           => 'Atsijungti',
 ];

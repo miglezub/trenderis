@@ -21,7 +21,7 @@
             @csrf
             <a class="dropdown-item" href="route('logout')" 
                 onclick="event.preventDefault();this.closest('form').submit();">
-                {{ __('Log out') }}
+                {{ __('auth.log_out') }}
             </a>
         </form>
       </div>
