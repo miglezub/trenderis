@@ -20,7 +20,13 @@ class TokenizerCustom
         $this->text = str_replace(array('.', ',', "\n", "\t", "\r", "!", "?", ":", ";", "(", ")", "[", "]", "\"", "“", "„", " – "), ' ', $this->text);
         $this->removeStopWords();
         $this->text = preg_replace("/[\s]+/mu", " ", $this->text);
-        return explode(" ", $this->text);
+        $tokenized = explode(" ", $this->text);
+        return array_filter(
+            $tokenized,
+            function ($value) {
+                return strlen($value) > 1;
+            }
+        );
     }
 
     private function removeStopWords() {
