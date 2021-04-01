@@ -23539,7 +23539,7 @@ svg {
   margin-right: 10px;
 }
 
-.wrapper #sidebar ul li.active a {
+.wrapper #sidebar ul li.router-link-active a {
   color: #fff;
   background: #1B91BF;
 }
