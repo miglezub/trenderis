@@ -19,14 +19,23 @@
                         </select>
                         <div v-if="submitted && (!$v.text.language_id.required || !$v.text.language_id.minValue)" class="invalid-feedback">Privaloma nurodyti kalbą</div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group mb-5">
                         <label class="switch">
                             <input type="checkbox" v-model="text.use_idf">
                             <span class="slider round"></span>
                         </label>
                         <span class="pl-2">Ar naudoti TF-IDF?</span>
                     </div>
-                    <button type="submit" class="btn btn-primary mt-5">Analizuoti</button>
+                    <b-overlay
+                    :show="busy"
+                    rounded
+                    opacity="0.6"
+                    spinner-small
+                    spinner-variant="primary"
+                    class="d-inline-block"
+                    >
+                    <button type="submit" class="btn btn-primary" :disabled="busy">Analizuoti</button>
+                    </b-overlay>
                 </div>
             </form>
         </div>
@@ -46,6 +55,7 @@ import { required, minValue } from "vuelidate/lib/validators";
                 },
                 languages: {},
                 submitted: false,
+                busy: false,
             }
         },
         created() {
@@ -63,6 +73,7 @@ import { required, minValue } from "vuelidate/lib/validators";
         },
         methods: {
             handleSubmit(e) {
+                this.busy = true;
                 this.submitted = true;
                 var that = this;
 
@@ -74,6 +85,7 @@ import { required, minValue } from "vuelidate/lib/validators";
                 this.axios
                     .post('/api/texts', this.text)
                     .then(function(response) {
+                        that.busy = false;
                         if(response.data.error) {
                             console.log(response.error);
                         } else {
