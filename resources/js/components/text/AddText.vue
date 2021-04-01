@@ -64,6 +64,7 @@ import { required, minValue } from "vuelidate/lib/validators";
         methods: {
             handleSubmit(e) {
                 this.submitted = true;
+                var that = this;
 
                 this.$v.$touch();
                 if (this.$v.$invalid) {
@@ -73,10 +74,14 @@ import { required, minValue } from "vuelidate/lib/validators";
                 this.axios
                     .post('/api/texts', this.text)
                     .then(function(response) {
-                        if(response.error) {
+                        if(response.data.error) {
                             console.log(response.error);
                         } else {
-                            this.$router.push({ name: 'texts' })
+                            if(response.data.id) {
+                                that.$router.push({ name: 'showText', params: { id: response.data.id } })
+                            } else {
+                                that.$router.push({ name: 'texts' })
+                            }
                         }
                     })
                     .catch(err => console.log(err))
