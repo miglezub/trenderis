@@ -23727,4 +23727,9 @@ svg {
   border-color: #0367A6;
 }
 
+#show-text {
+  height: 700px;
+  overflow-y: auto;
+}
+
 
