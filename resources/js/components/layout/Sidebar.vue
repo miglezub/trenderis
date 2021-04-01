@@ -8,7 +8,7 @@
         </div> -->
 
         <ul class="list-unstyled components">
-            <li>
+            <li :class="{'router-link-active': subIsActive('/apikeys')}">
                 <a href="#apiKeySubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                     <i class="fas fa-key"></i>
                     API raktai
@@ -17,12 +17,9 @@
                     <li>
                         <router-link :to="{name: 'texts'}">API raktų sąrašas</router-link>
                     </li>
-                    <li>
-                        <router-link :to="{name: 'createText'}">Pridėti API raktą</router-link>
-                    </li>
                 </ul>
             </li>
-            <li class="active">
+            <li :class="{'router-link-active': subIsActive('/text')}">
                 <a href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                     <i class="fas fa-file-alt"></i>
                     Tekstai
@@ -36,7 +33,7 @@
                     </li>
                 </ul>
             </li>
-            <li>
+            <li :class="{'router-link-active': subIsActive('/graphs')}">
                 <a href="#">
                     <i class="far fa-chart-bar"></i>
                     Grafikai
@@ -51,3 +48,18 @@
         </ul> -->
     </nav>
 </template>
+<script>
+export default {
+    methods: {
+        subIsActive(input) {
+            if(input == "/text" && this.$route.path == "/") {
+                return true;
+            }
+            const paths = Array.isArray(input) ? input : [input];
+            return paths.some(path => {
+            return this.$route.path.indexOf(path) === 0
+            })
+        }
+    }
+}
+</script>
