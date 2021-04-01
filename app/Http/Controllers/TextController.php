@@ -119,7 +119,7 @@ class TextController extends Controller
                 ]);
                 $analysisController = new TextAnalysisController();
                 $analysisController->analyse($analysis->id, auth()->user()->id);
-                return response()->json(['success' => 'Tekstas pridėtas sėkmingai', 'id' => $newText->id->toJSON() ]);
+                return response()->json(['success' => 'Tekstas pridėtas sėkmingai', 'id' => $newText->id ]);
             } else {
                 return response()->json(['error' => 'Klaida']);
             }
@@ -147,12 +147,24 @@ class TextController extends Controller
                 ]);
                 $analysisController = new TextAnalysisController();
                 $analysisController->analyse($analysis->id, $user->id);
-                // return response()->json(['success' => 'Analizes rezultatai atnaujinti.']);
+                return response()->json(['success' => 'Analizes rezultatai atnaujinti.']);
             } else {
                 return response()->json(['error' => 'Klaida']);
             }
         } else {
             return redirect('/login');
         }
+    }
+
+    public function lemmatize($word)
+    {
+        $lemmatizer = new Lemmatizer(1);
+        return response()->json($lemmatizer->lemmatize($word));
+    }
+
+    public function wordEndings()
+    {
+        $lemmatizer = new Lemmatizer(1);
+        return response()->json($lemmatizer->formEndings());
     }
 }
