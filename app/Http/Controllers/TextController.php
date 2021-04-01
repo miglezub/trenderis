@@ -58,7 +58,7 @@ class TextController extends Controller
             $text = $user->texts()->find($id);
             $text['original_text'] = nl2br($text['original_text']);
             $analysis = $text->text_analysis->last();
-            $json['results'] = unserialize($analysis->results);
+            $json['results'] = json_decode($analysis->results);
             $json['text'] = $text;
             return response()->json($json);
         } else {
@@ -117,10 +117,11 @@ class TextController extends Controller
                     'use_idf' => $data['use_idf'],
                     'use_word2vec' => $data['use_word2vec']
                 ]);
-                TextAnalysisController::analyse($analysis->id);
-                return response()->json(['success' => 'Tekstas pridėtas sėkmingai']);
+                $analysisController = new TextAnalysisController();
+                $analysisController->analyse($analysis->id, auth()->user()->id);
+                return response()->json(['success' => 'Tekstas pridėtas sėkmingai', 'id' => $newText->id->toJSON() ]);
             } else {
-                return response()->json(['error' => 'Įvyko klaida. Tekstas nebuvo pridėtas. Patikrinkite, ar nurodyti visi privalomi parametrai.']);
+                return response()->json(['error' => 'Klaida']);
             }
         } else {
             return redirect('/login');
@@ -144,10 +145,11 @@ class TextController extends Controller
                     'use_idf' => $data['use_idf'],
                     'use_word2vec' => $text->use_word2vec
                 ]);
-                TextAnalysisController::analyse($analysis->id, $user->id);
-                return response()->json(['success' => 'Analizės rezultatai atnaujinti.']);
+                $analysisController = new TextAnalysisController();
+                $analysisController->analyse($analysis->id, $user->id);
+                // return response()->json(['success' => 'Analizes rezultatai atnaujinti.']);
             } else {
-                return response()->json(['error' => 'Įvyko klaida. Analizės rezultatai nebuvo atnaujinti.']);
+                return response()->json(['error' => 'Klaida']);
             }
         } else {
             return redirect('/login');

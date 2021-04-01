@@ -5,16 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\TextAnalysis;
 use App\Models\User;
 
-use Illuminate\Http\Request;
-use Symfony\Component\CssSelector\Parser\Token;
-
 class TextAnalysisController extends Controller
 {
-    static function analyse($id, $user_id)
+    public function analyse($id, $user_id)
     {
         $analysis = TextAnalysis::find($id);
         $text = $analysis->text;
-        $tokenizer = new Tokenizer($text->original_text, $text->language_id);
+        $tokenizer = new TokenizerCustom($text->original_text, $text->language_id);
         $tokenized = $tokenizer->tokenize();
         $total = count($tokenized);
         $results = array_count_values($tokenized);
@@ -49,6 +46,6 @@ class TextAnalysisController extends Controller
                 unset($results[$key]);
             }
         }
-        $analysis->update(['results' => serialize($results)]);
+        $analysis->update(['results' => json_encode($results, JSON_INVALID_UTF8_IGNORE)]);
     }
 }
