@@ -5,31 +5,34 @@
             <router-link :to="{name: 'texts'}" class="btn btn-danger float-right">Atgal</router-link>
         </h4>
         <div class="card-body row">
+            <div class="col-md-12">
+                <b-button class="btn btn-primary float-right mb-2" @click="showModal()">Atnaujinti analizę</b-button>
+            </div>
             <div class="col-md-6">
-                <div class="jumbotron" v-html="text.original_text">
+                <div class="jumbotron" id="show-text" v-html="text.original_text">
                 </div>
             </div>
             <div class="col-md-6">
-                <b-button class="btn btn-primary float-right mb-2" @click="showModal()">Atnaujinti analizę</b-button>
                 <b-table
                     id="analysis-table"
                     striped hover
                     :items="results"
                     :fields="fields"
-                    sticky-header='750px'
-                    style="clear: both; height: 750px;"
+                    sticky-header='700px'
+                    style="clear: both; height: 700px;"
                     :busy.sync="isBusy"
                     :sort-by.sync="sortBy"
                     :sort-desc.sync="sortDesc"
                     >
-                    <template v-slot:cell(original_text)="data">
-                        <div v-html="data.item.original_text"></div>
-                    </template>
                     <template v-slot:table-busy>
                         <div class="text-center text-orange my-5">
                                 <b-spinner class="align-middle" type="grow"></b-spinner>
                                 <strong>Kraunasi...</strong>
                         </div>
+                    </template>
+                    <template v-slot:cell(key)="data">
+                        <span v-b-tooltip.hover v-if="data.item.value.incl" :title="data.item.value.incl.join(', ')">{{ data.item.key }}</span>
+                        <span v-else>{{ data.item.key }}</span>
                     </template>
                 </b-table>
             </div>
@@ -59,7 +62,16 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-success" @click="analyse()">Analizuoti</button>
+                    <b-overlay
+                    :show="busyAnalysis"
+                    rounded
+                    opacity="0.6"
+                    spinner-small
+                    spinner-variant="success"
+                    class="d-inline-block"
+                    >
+                        <button type="button" class="btn btn-success" :disabled="busyAnalysis" @click="analyse()">Analizuoti</button>
+                    </b-overlay>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Uždaryti</button>
                 </div>
                 </div>
@@ -72,12 +84,13 @@
         data() {
             return {
                 text: {},
-                results: {},
+                results: [],
                 languages: {},
                 limit: 100,
                 isBusy: true,
                 sortBy: 'value.tf',
                 sortDesc: true,
+                busyAnalysis: false,
                 fields: [
                     {
                         key: 'key',
@@ -131,6 +144,7 @@
                     });
             },
             analyse() {
+                this.busyAnalysis = true;
                 this.sortBy = 'value.tf';
                 if(this.fields.length > 3) {
                     this.fields.pop();
@@ -140,6 +154,7 @@
                 this.axios
                     .post(`/api/analyse/${this.$route.params.id}`, this.text)
                     .then(function(response) {
+                        that.busyAnalysis = false;
                         if(response.error) {
                             console.log(response.error);
                         } else {
