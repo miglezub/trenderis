@@ -19,6 +19,8 @@
                     sticky-header='750px'
                     style="clear: both; height: 750px;"
                     :busy.sync="isBusy"
+                    :sort-by.sync="sortBy"
+                    :sort-desc.sync="sortDesc"
                     >
                     <template v-slot:cell(original_text)="data">
                         <div v-html="data.item.original_text"></div>
@@ -74,6 +76,8 @@
                 languages: {},
                 limit: 100,
                 isBusy: true,
+                sortBy: 'value.tf',
+                sortDesc: true,
                 fields: [
                     {
                         key: 'key',
@@ -90,7 +94,7 @@
                         label: 'TF',
                         sortable: true,
                         formatter: value => {
-                            return value.toFixed(4);
+                            return parseFloat(value).toFixed(4);
                         }
                     },
                 ],
@@ -102,6 +106,7 @@
         methods: {
             fetchData() {
                 this.isBusy = true;
+                var that = this;
                 if(!this.$route || !this.$route.params.id) {
                     this.$router.push({ name: 'texts' });
                 } else {
@@ -110,28 +115,8 @@
                         .then((res) => {
                             this.text = res.data.text;
                             if(res.data.results) {
+                                that.initializeIdfFields();
                                 this.results = Object.entries(res.data.results).map(([key, value]) => ({key,value}));
-                                console.log(this.results);
-                                if(this.text.use_idf) {
-                                    var field = {
-                                        key: 'value.idf',
-                                        label: 'IDF',
-                                        sortable: true,
-                                        formatter: value => {
-                                            return value.toFixed(4);
-                                        }
-                                    };
-                                    this.fields.push(field);
-                                    var field = {
-                                        key: 'value.tf-idf',
-                                        label: 'TF-IDF',
-                                        sortable: true,
-                                        formatter: value => {
-                                            return value.toFixed(4);
-                                        }
-                                    };
-                                    this.fields.push(field);
-                                }
                             }
                             this.loadLanguages();
                             this.isBusy = false;
@@ -146,6 +131,11 @@
                     });
             },
             analyse() {
+                this.sortBy = 'value.tf';
+                if(this.fields.length > 3) {
+                    this.fields.pop();
+                    this.fields.pop();
+                }
                 var that = this;
                 this.axios
                     .post(`/api/analyse/${this.$route.params.id}`, this.text)
@@ -160,6 +150,29 @@
             },
             showModal() {
                 $('#analyseModal').modal('show');
+            },
+            initializeIdfFields() {
+                if(this.text.use_idf) {
+                    this.sortBy = 'value.tf-idf';
+                    var field = {
+                        key: 'value.idf',
+                        label: 'IDF',
+                        sortable: true,
+                        formatter: value => {
+                            return value.toFixed(4);
+                        }
+                    };
+                    this.fields.push(field);
+                    var field = {
+                        key: 'value.tf-idf',
+                        label: 'TF-IDF',
+                        sortable: true,
+                        formatter: value => {
+                            return value.toFixed(4);
+                        }
+                    };
+                    this.fields.push(field);
+                }
             }
         }
     }
