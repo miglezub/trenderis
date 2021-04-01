@@ -6,13 +6,9 @@ import PageNotFound from './components/PageNotFound.vue';
  
 export const routes = [
     {
-        name: 'home',
-        path: '/',
-        component: AllTexts
-    },
-    {
         name: 'texts',
         path: '/texts/',
+        alias: '/',
         component: AllTexts
     },
     {
