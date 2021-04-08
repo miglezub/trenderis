@@ -1,15 +1,12 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\Text;
-use App\Models\TextAnalysis;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class TextController extends Controller
 {
-    public function index() {
-        $user = Auth::user();
+    public function index(Request $request) {
+        $user = $request->user();
         if($user) {
             $texts = $user->texts()->get()->toArray();
             foreach($texts as $key => $text) {
@@ -27,7 +24,7 @@ class TextController extends Controller
 
     public function filter(Request $request)
     {
-        $user = Auth::user();
+        $user = $request->user();
         if($user) {
             $texts = $user->texts();
             $textsQuery = $user->texts();
@@ -51,8 +48,8 @@ class TextController extends Controller
         }
     }
 
-    public function show($id) {
-        $user = Auth::user();
+    public function show($id, Request $request) {
+        $user = $request->user();
         if($user) {
             $json = array();
             $text = $user->texts()->find($id);
@@ -68,7 +65,7 @@ class TextController extends Controller
 
     public function update($id, Request $request)
     {
-        $user = Auth::user();
+        $user = $request->user();
         if($user) {
             $text = $user->texts()->find($id);
             $text->update($request->all());
@@ -78,9 +75,9 @@ class TextController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
-        $user = Auth::user();
+        $user = $request->user();
         if($user) {
             $text = $user->texts()->find($id);
             foreach($text->text_analysis as $analysis) {
@@ -93,9 +90,9 @@ class TextController extends Controller
         }
     }
 
-    public function store()
+    public function store(Request $request)
     {
-        if(auth()->user()) {
+        if($request->user()) {
             $data = request()->validate([
                 'original_text' => 'required',
                 'language_id' => 'required',
@@ -103,7 +100,7 @@ class TextController extends Controller
                 'use_word2vec' => 'nullable|boolean',
             ]);
     
-            $newText = auth()->user()->texts()->create([
+            $newText = $request->user()->texts()->create([
                 'original_text' => html_entity_decode($data['original_text']),
                 'language_id' => $data['language_id'],
                 'use_idf' => $data['use_idf'],
@@ -128,9 +125,9 @@ class TextController extends Controller
         }
     }
 
-    public function analyse($id)
+    public function analyse($id, Request $request)
     {
-        $user = Auth::user();
+        $user = $request->user();
         if($user) {
             $text = $user->texts()->find($id);
             if($text) {
