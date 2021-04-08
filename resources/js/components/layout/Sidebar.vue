@@ -8,14 +8,14 @@
         </div> -->
 
         <ul class="list-unstyled components">
-            <li :class="{'router-link-active': subIsActive('/apikeys')}">
+            <li :class="{'router-link-active': subIsActive('/keys')}">
                 <a href="#apiKeySubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                     <i class="fas fa-key"></i>
                     API raktai
                 </a>
                 <ul class="collapse list-unstyled" id="apiKeySubmenu">
                     <li>
-                        <router-link :to="{name: 'texts'}">API raktų sąrašas</router-link>
+                        <router-link :to="{name: 'keys'}">API raktų sąrašas</router-link>
                     </li>
                 </ul>
             </li>
