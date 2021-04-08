@@ -16,6 +16,7 @@ import { routes } from './routes';
 import Vue from 'vue';
 import Vuelidate from 'vuelidate';
 import { BootstrapVue } from 'bootstrap-vue';
+import VueClipboard from 'vue-clipboard2';
 
 /**
  * The following block of code may be used to automatically register your
@@ -41,6 +42,7 @@ Vue.use(VueRouter);
 Vue.use(VueAxios, axios);
 Vue.use(Vuelidate);
 Vue.use(BootstrapVue);
+Vue.use(VueClipboard);
 
 const router = new VueRouter({
     mode: 'history',
