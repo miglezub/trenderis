@@ -402,7 +402,20 @@ svg {
           }
       }
   }
-  #show-text {
+  #jumbotron-container {
+      display: flex;
+      flex-direction: column;
+      text-align: justify;
       height: 700px;
-      overflow-y: auto;
+      #show-text {
+          overflow: auto;
+          max-height: 100%;
+          margin-bottom: 0px;
+          flex: 1;
+      }
+      #title-jumbotron {
+        padding: 32px;
+        margin-bottom: 16px;
+        width: 100%;
+      }
   }
