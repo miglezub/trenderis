@@ -20,13 +20,16 @@
 
             <b-table
                 id="texts-table"
-                striped hover
+                striped hover show-empty sort-icon-left
                 :items="texts"
                 :fields="fields"
                 :per-page="perPage"
                 :current-page="currentPage"
                 :busy.sync="isBusy"
                 >
+                <template #empty="scope">
+                    <div class="text-center">Nėra pridėtų tekstų</div>
+                </template>
                 <template v-slot:cell(original_text)="data">
                     <div v-html="data.item.original_text"></div>
                 </template>
@@ -49,6 +52,7 @@
                 :per-page="perPage"
                 aria-controls="texts-table"
                 align="right"
+                v-if="texts.length > 10"
                 ></b-pagination>
         </div>
         <delete-confirm title="Teksto ištrynimas" message="Ar tikrai norite ištrinti tekstą?<br>Pašalinus tekstą bus ištrinti ir jo analizės rezultatai." :id="deleteId" v-on:approvedDeletion="deleteText"></delete-confirm>
@@ -67,14 +71,14 @@
                 texts: [],
                 date: [],
                 deleteId: 0,
-                perPage: 8,
+                perPage: 10,
                 currentPage: 1,
                 languages: {},
                 isBusy: true,
                 fields: [
                     {
-                        key: 'original_text',
-                        label: 'Tekstas',
+                        key: 'title',
+                        label: 'Pavadinimas',
                         sortable: false
                     },
                     {
