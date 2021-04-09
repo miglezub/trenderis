@@ -32,6 +32,9 @@ Route::prefix('api')->middleware('auth')->group(function () {
     Route::post('/analyse/{id}', 'App\Http\Controllers\TextController@analyse');
     Route::get('/lemmatize/{word}', 'App\Http\Controllers\TextController@lemmatize');
     Route::get('/wordEndings', 'App\Http\Controllers\TextController@wordEndings');
+    Route::get('/import', 'App\Http\Controllers\TextController@import');
+    Route::get('/dayResults', 'App\Http\Controllers\TextController@dayResults');
+    Route::get('/recalculate', 'App\Http\Controllers\TextController@recalculate');
 
     Route::resource('/keys', App\Http\Controllers\ApiKeyController::class);
 });
