@@ -8,14 +8,15 @@
             <div class="col-md-12">
                 <b-button class="btn btn-primary float-right mb-2" @click="showModal()">Atnaujinti analizę</b-button>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6" id="jumbotron-container">
+                <h5 class="jumbotron font-weight-bold" id="title-jumbotron" v-html="text.title" v-if="text-title"></h5>
                 <div class="jumbotron" id="show-text" v-html="text.original_text">
                 </div>
             </div>
             <div class="col-md-6">
                 <b-table
                     id="analysis-table"
-                    striped hover
+                    striped hover show-empty sort-icon-left
                     :items="results"
                     :fields="fields"
                     sticky-header='700px'
@@ -23,16 +24,23 @@
                     :busy.sync="isBusy"
                     :sort-by.sync="sortBy"
                     :sort-desc.sync="sortDesc"
+                    :tbody-tr-class="rowClass"
                     >
+                    <template #empty="scope">
+                        <div class="text-center">Analizė neatlikta</div>
+                    </template>
                     <template v-slot:table-busy>
                         <div class="text-center text-orange my-5">
                                 <b-spinner class="align-middle" type="grow"></b-spinner>
                                 <strong>Kraunasi...</strong>
                         </div>
                     </template>
-                    <template v-slot:cell(key)="data">
-                        <span v-b-tooltip.hover v-if="data.item.value.incl" :title="data.item.value.incl.join(', ')">{{ data.item.key }}</span>
-                        <span v-else>{{ data.item.key }}</span>
+                    <template v-slot:cell(value.w)="data">
+                        <span v-b-tooltip.hover.html="getTitle(data.item.value)" v-if="data.item.value.incl || data.item.value.lemma">
+                            <b v-if="data.item.value.incl">{{ data.item.value.w }}</b>
+                            <span v-else>{{ data.item.value.w }}</span>
+                        </span>
+                        <span v-else>{{ data.item.value.w }}</span>
                     </template>
                 </b-table>
             </div>
@@ -93,7 +101,7 @@
                 busyAnalysis: false,
                 fields: [
                     {
-                        key: 'key',
+                        key: 'value.w',
                         label: 'Žodis',
                         sortable: true,
                     },
@@ -131,7 +139,9 @@
                                 that.initializeIdfFields();
                                 this.results = Object.entries(res.data.results).map(([key, value]) => ({key,value}));
                             }
-                            this.loadLanguages();
+                            // if(this.languages.length == 0) {
+                                this.loadLanguages();
+                            // }
                             this.isBusy = false;
                         });
                 }
@@ -168,7 +178,7 @@
             },
             initializeIdfFields() {
                 if(this.text.use_idf) {
-                    this.sortBy = 'value.tf-idf';
+                    this.sortBy = 'value.tfidf';
                     var field = {
                         key: 'value.idf',
                         label: 'IDF',
@@ -179,7 +189,7 @@
                     };
                     this.fields.push(field);
                     var field = {
-                        key: 'value.tf-idf',
+                        key: 'value.tfidf',
                         label: 'TF-IDF',
                         sortable: true,
                         formatter: value => {
@@ -188,6 +198,23 @@
                     };
                     this.fields.push(field);
                 }
+            },
+            getTitle(item) {
+                var result = "";
+                if(item.lemma) {
+                    result += "Lematizuotas: " + item.lemma + "<br>";
+                }
+                if(item.incl) {
+                    result += "Įtraukti žodžiai: " + item.incl.join(', ');
+                }
+                return result;
+            },
+            rowClass(item, type) {
+                if (!item || type !== 'row') return;
+                var index = parseInt(this.results.indexOf(item));
+                if (index < 5) return 'table-success';
+                if (index < 10) return 'table-primary';
+                return;
             }
         }
     }
