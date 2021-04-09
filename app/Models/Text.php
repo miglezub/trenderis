@@ -13,7 +13,9 @@ class Text extends Model
         'use_word2vec',
         'use_idf', 
         'trained_word2vec',
-        'language_id'
+        'language_id',
+        'updated_at',
+        'title'
     ]; 
 
     public function language()
