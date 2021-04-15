@@ -34,10 +34,7 @@
                 </ul>
             </li>
             <li :class="{'router-link-active': subIsActive('/graphs')}">
-                <a href="#">
-                    <i class="far fa-chart-bar"></i>
-                    Grafikai
-                </a>
+                <router-link :to="{name: 'graphs'}"><i class="far fa-chart-bar"></i>Grafikai</router-link>
             </li>
         </ul>
 
