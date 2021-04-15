@@ -30,8 +30,8 @@
                 <template #empty="scope">
                     <div class="text-center">Nėra pridėtų tekstų</div>
                 </template>
-                <template v-slot:cell(original_text)="data">
-                    <div v-html="data.item.original_text"></div>
+                <template v-slot:cell(title)="data">
+                    <div v-html="data.item.title"></div>
                 </template>
                 <template v-slot:cell(buttons)="data">
                     <b-button-group class="float-right">

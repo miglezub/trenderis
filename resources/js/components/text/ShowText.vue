@@ -9,7 +9,7 @@
                 <b-button class="btn btn-primary float-right mb-2" @click="showModal()">Atnaujinti analizę</b-button>
             </div>
             <div class="col-md-6" id="jumbotron-container">
-                <h5 class="jumbotron font-weight-bold" id="title-jumbotron" v-html="text.title" v-if="text-title"></h5>
+                <h5 class="jumbotron font-weight-bold" id="title-jumbotron" v-html="text.title" v-if="text.title"></h5>
                 <div class="jumbotron" id="show-text" v-html="text.original_text">
                 </div>
             </div>

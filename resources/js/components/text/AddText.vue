@@ -12,6 +12,10 @@
                 </div>
                 <div class="col-md-4 pt-5">
                     <div class="form-group">
+                        <label class="font-weight-bold">Pavadinimas</label>
+                        <textarea class="form-control" rows="2" v-model="text.title"></textarea>
+                    </div>
+                    <div class="form-group">
                         <label for="language-select" class="font-weight-bold">Teksto kalba</label>
                         <select class="custom-select" id="language-select" v-model="text.language_id" v-bind:class="{ 'is-invalid': submitted && (!$v.text.language_id.required || !$v.text.language_id.minValue) }">
                             <option value="" disabled>Pasirinkite kalbą</option>
@@ -48,6 +52,7 @@ import { required, minValue } from "vuelidate/lib/validators";
         data() {
             return {
                 text: {
+                    title: "",
                     original_text: "",
                     language_id: "",
                     use_idf: false,
@@ -79,6 +84,7 @@ import { required, minValue } from "vuelidate/lib/validators";
 
                 this.$v.$touch();
                 if (this.$v.$invalid) {
+                    this.busy = false;
                     return;
                 }
 

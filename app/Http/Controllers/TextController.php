@@ -12,10 +12,12 @@ class TextController extends Controller
         if($user) {
             $texts = $user->texts()->get()->toArray();
             foreach($texts as $key => $text) {
-                if(strlen($text['original_text']) > 200) {
-                    $texts[$key]['original_text'] = nl2br(substr($text['original_text'], 0, strpos($text['original_text'], " " , 200))) . " ...";
-                } else {
-                    $texts[$key]['original_text'] = nl2br($text['original_text']);
+                if(strlen($text['title']) == 0) {
+                    if(strlen($text['original_text']) > 150) {
+                        $texts[$key]['title'] = nl2br(substr($text['original_text'], 0, strpos($text['original_text'], " " , 150))) . " ...";
+                    } else {
+                        $texts[$key]['title'] = nl2br($text['original_text']);
+                    }
                 }
             }
             return array_reverse($texts);
@@ -98,6 +100,7 @@ class TextController extends Controller
     {
         if($request->user()) {
             $data = request()->validate([
+                'title' => 'nullable',
                 'original_text' => 'required',
                 'language_id' => 'required',
                 'use_idf' => 'nullable|boolean',
@@ -105,6 +108,7 @@ class TextController extends Controller
             ]);
     
             $newText = $request->user()->texts()->create([
+                'title' => html_entity_decode($data['title']),
                 'original_text' => html_entity_decode($data['original_text']),
                 'language_id' => $data['language_id'],
                 'use_idf' => $data['use_idf'],
@@ -205,66 +209,26 @@ class TextController extends Controller
         }
     }
 
-    public function dayResults()
-    {
-        $start = microtime(true);
-        $user = \App\Models\User::find(1);
-        $texts = $user->texts()->get()->toArray();
-        $results = array();
-        foreach($texts as $text) {
-            $analysis = TextAnalysis::where('text_id', '=', $text['id'])->orderBy('updated_at')->take(1)->get()->last();
-            if($analysis) {
-                foreach(json_decode($analysis->results) as $a) {
-                    if(!key_exists($a->w, $results)) {
-                        $results[$a->w] = array();
-                        $results[$a->w]['freq'] = $a->freq;
-                        $results[$a->w]['tf'] = $a->tf;
-                        if(isset($a->tfidf)) {
-                            if(key_exists('tf-idf', $results[$a->w])) {
-                                $results[$a->w]['tf-idf'] += $a->tfidf;
-                            } else {
-                                $results[$a->w]['tf-idf'] = $a->tfidf;
-                            }
-                        }
-                    } else {
-                        $results[$a->w]['freq'] += $a->freq;
-                        $results[$a->w]['tf'] += $a->tf;
-                        if(!key_exists('tf-idf', $results[$a->w])) {
-                            $results[$a->w]['tf-idf'] = 0;
-                        }
-                        if(isset($a->tfidf)) {
-                            $results[$a->w]['tf-idf'] += $a->tfidf;
-                        } else {
-                            $results[$a->w]['tf-idf'] += $a->tf;
-                        }
-                    }
-                }
-            }
-        }
-        $res = array();
-        foreach($results as $key => $result) {
-            $results[$key]['w'] = $key;
-            $res[] = $results[$key];
-        }
-        usort($results, array(TextAnalysisController::class, "cmp"));
-        $results = array_splice($results, 0, 20, true);
-        $end = microtime(true);
-        return response()->json(array('results' => $results, 'time' => $end - $start));
-    }
-
     public function recalculate()
     {
         set_time_limit(150);
         $texts = \App\Models\Text::all();
+        $limit = 10;
         foreach($texts as $text) {
-            $analysis = $text->text_analysis()->create([
-                'lemmatized_text' => '',
-                'results' => '',
-                'use_idf' => 1,
-                'use_word2vec' => $text->use_word2vec
-            ]);
-            $analysisController = new TextAnalysisController();
-            $analysisController->analyse($analysis->id, $text->user_id);
+            if($limit < 1) {
+                return;
+            }
+            if(!$text->text_analysis->last() || $text->text_analysis->last()->updated_at < date("Y-m-d H:i:s", strtotime("-1 hours"))) {
+                $analysis = $text->text_analysis()->create([
+                    'lemmatized_text' => '',
+                    'results' => '',
+                    'use_idf' => 1,
+                    'use_word2vec' => $text->use_word2vec
+                ]);
+                $analysisController = new TextAnalysisController();
+                $analysisController->analyse($analysis->id, $text->user_id);
+                $limit--;
+            }
         }
     }
 }

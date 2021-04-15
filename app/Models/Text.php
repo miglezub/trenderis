@@ -14,7 +14,7 @@ class Text extends Model
         'use_idf', 
         'trained_word2vec',
         'language_id',
-        'updated_at',
+        'created_at',
         'title'
     ]; 
 
