@@ -78,8 +78,8 @@ class Lemmatizer
     protected $gender_endings = array(
         'ą' => array(
             //vyrą agentūrą???
-            //vyrą vėją, streiką
-            'mas' => array('r', 'j', 'k'),
+            //vyrą vėją, streiką, tekstą
+            'mas' => array('r', 'j', 'k', 't'),
             //galvą saują
             'fem' => array('v', 'uj')
         ),
@@ -88,7 +88,13 @@ class Lemmatizer
             'mas' => array('l', 'd', 'k', 't', 'n'),
             //seserį, avį
             'fem' => array('r', 'v')
-        )
+        ),
+        'e' => array(
+            //tekste
+            'mas' => array('st'),
+            //bite
+            'fem' => array('it')
+        ),
     );
 
     public function __construct($lang)
@@ -164,6 +170,9 @@ class Lemmatizer
 
     public function getGender($word) {
         $last = substr($word, -2);
+        if(!key_exists($last, $this->gender_endings)) {
+            $last = substr($word, -1);
+        }
         if(key_exists($last, $this->gender_endings)) {
             $last2 = substr($word, -3);
             $last3 = substr($word, -4);
