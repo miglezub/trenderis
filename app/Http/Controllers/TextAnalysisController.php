@@ -28,6 +28,27 @@ class TextAnalysisController extends Controller
         }
     }
 
+    static function cmpFreqFirst($a, $b)
+    {
+        if (key_exists("freq", $a) && !empty($a['freq'])) {
+            if ($a['freq'] == $b['freq']){
+                return 0;
+            }
+            return ($a['freq'] < $b['freq']) ? 1 : -1;
+        } else if (key_exists("tfidf", $a) && !empty($a['tfidf'])) {
+            if($a['tfidf'] == $b['tfidf']) {
+                if ($a['freq'] == $b['freq']){
+                    return (key($a) < key($b)) ? -1 : 1;
+                }
+                return ($a['freq'] < $b['freq']) ? 1 : -1;
+            } else {
+                return (($a["tfidf"]-$b["tfidf"]) < 0) ? 1 : -1;
+            }
+        } else {
+            return 0;
+        }
+    }
+
     public function analyse($id, $user_id)
     {
         $start = microtime(true);
