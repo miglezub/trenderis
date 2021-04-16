@@ -1,6 +1,6 @@
 <template>
     <div class="card">
-        <filter-modal></filter-modal>
+        <filter-modal v-on:filterGraph="filterGraph"></filter-modal>
         <h5 class="card-header">Tendencijų grafikas</h5>
         <div class="card-body">
             <b-button class="btn btn-primary mb-3 float-right" @click="filterModal">Filtruoti grafiką</b-button>
@@ -12,7 +12,8 @@
                     spinner-variant="primary"
                     class="d-inline-block spinner-large"
                     >
-                    <line-chart v-if="chartReady" :chart-data="datacollection" :options="chartOptions"></line-chart>
+                    <line-chart v-if="chartReady && !chartEmpty" :chart-data="datacollection" :options="chartOptions"></line-chart>
+                    <div v-else-if="chartEmpty">Nerasta duomenų atitinkančių filtro kriterijus</div>
                     <div v-else></div>
                 </b-overlay>
             </div>
@@ -54,10 +55,17 @@
         freq: [],
         tfidf: [],
         chartReady: false,
+        chartEmpty: false
       }
     },
     mounted () {
-      this.fillData()
+        var date = new Date();
+        date.setDate(date.getDate() - 1);
+        date.setHours(0);
+        date.setMinutes(59);
+        date.setSeconds(59);
+        var filter = {dates: [date, ""]};
+        this.filterGraph(filter);
     },
     methods: {
         fillData () {
@@ -75,6 +83,12 @@
                         that.tfidf.push(result.tf);
                     }
                 });
+
+                if((response.data.results).length < 1) {
+                    that.chartEmpty = true;
+                } else {
+                    that.chartEmpty = false;
+                }
 
                 that.datacollection = {
                     labels: that.labels,
@@ -102,11 +116,36 @@
         filterModal() {
             $('#filterModal').modal('show');
         },
-        filterGraph() {
+        filterGraph(filter) {
             this.chartReady = false;
             var that = this;
+            this.labels = [];
+            this.freq = [];
+            this.tfidf = [];
+            var date1;
+            var date2;
+            if(!filter.dates[0]) {
+                date1 = "";
+            } else {
+                date1 = new Date()
+                date1.setTime(filter.dates[0].getTime() + 3600 * 1000 * 26 - 1);
+            }
+            if(!filter.dates[1]) {
+                filter.dates[1] = "";
+            } else {
+                date2 = new Date()
+                date2.setTime(filter.dates[1].getTime() + 3600 * 1000 * 26 - 1);
+            }
             this.axios
-                .get('/api/dayResults')
+                .get('/api/filterGraph', {
+                    params: {
+                        type: filter.type,
+                        date1: date1,
+                        date2: date2,
+                        key: filter.key,
+                        keyword: filter.keyword
+                    }
+                })
                 .then(response => {
                     response.data.results.forEach(function(result) {
                         that.labels.push(result.w);
@@ -117,6 +156,12 @@
                             that.tfidf.push(result.tf);
                         }
                     });
+
+                    if((response.data.results).length < 1) {
+                        that.chartEmpty = true;
+                    } else {
+                        that.chartEmpty = false;
+                    }
 
                     that.datacollection = {
                         labels: that.labels,
