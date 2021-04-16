@@ -35,7 +35,7 @@ class TextController extends Controller
             if($request->date1) {
                 $textsQuery->whereDate('created_at', '>=', $request->date1);
             }
-            if($request->date1) {
+            if($request->date2) {
                 $textsQuery->whereDate('created_at', '<=', $request->date2);
             }
             $texts = $textsQuery->get()->toArray();

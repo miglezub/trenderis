@@ -34,6 +34,7 @@ Route::prefix('api')->middleware('auth')->group(function () {
     Route::get('/wordEndings', 'App\Http\Controllers\TextController@wordEndings');
     Route::get('/import', 'App\Http\Controllers\TextController@import');
     Route::get('/dayResults', 'App\Http\Controllers\GraphFilterController@dayResults');
+    Route::get('/filterGraph', 'App\Http\Controllers\GraphFilterController@filter');
     Route::get('/recalculate', 'App\Http\Controllers\TextController@recalculate');
 
     Route::resource('/keys', App\Http\Controllers\ApiKeyController::class);
