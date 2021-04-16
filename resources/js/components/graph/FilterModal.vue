@@ -25,6 +25,7 @@
                             type="date" range 
                             placeholder="Nurodykite datas"
                             :disabled-date="disabledTomorrowAndLater"
+                            @pick="handlePick"
                             class="d-block w-100"
                             id="date-select"
                             v-bind:class="{ 'is-invalid': submitted && !$v.filter.dates.required  }">
@@ -66,6 +67,19 @@
 <script>
 import { required, minValue, requiredIf } from "vuelidate/lib/validators";
 import DatePicker from 'vue2-datepicker';
+DatePicker.methods.selectStartDate = function (date) {
+  this.$set(this.currentValue, 0, date)
+  this.updateDate()
+}
+
+DatePicker.methods.selectEndDate = function (date) {
+  this.$set(this.currentValue, 1, date)
+  this.updateDate()
+}
+
+DatePicker.methods.isValidRangeValue = function (value) {
+  return Array.isArray(value) && value.length === 2
+}
 import 'vue2-datepicker/index.css';
 import 'vue2-datepicker/locale/lt';
 export default {
@@ -111,7 +125,17 @@ export default {
             }
         };
     },
+    created() {
+        this.fetchApiKeys();
+    },
     methods: {
+        fetchApiKeys() {
+            this.axios
+                .get('/api/keys')
+                .then(response => {
+                    this.keys = response.data;
+                });
+        },
         disabledTomorrowAndLater(date) {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -129,6 +153,15 @@ export default {
             }
 
             this.$emit('filterGraph', this.filter);
+            $('#filterModal').modal('hide');
+            this.busy = false;
+        },
+        handlePick(newDate) {
+            console.log(newDate);
+            if(!this.filter.dates[0]) {
+                this.filter.dates[0] = new Date(newDate.getTime() + 30 * 24 * 3600 * 1000);
+                this.filter.dates[1] = new Date(newDate.getTime() + 30 * 24 * 3600 * 1000);
+            }
         }
     }
 }
