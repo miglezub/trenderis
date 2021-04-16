@@ -67,19 +67,6 @@
 <script>
 import { required, minValue, requiredIf } from "vuelidate/lib/validators";
 import DatePicker from 'vue2-datepicker';
-DatePicker.methods.selectStartDate = function (date) {
-  this.$set(this.currentValue, 0, date)
-  this.updateDate()
-}
-
-DatePicker.methods.selectEndDate = function (date) {
-  this.$set(this.currentValue, 1, date)
-  this.updateDate()
-}
-
-DatePicker.methods.isValidRangeValue = function (value) {
-  return Array.isArray(value) && value.length === 2
-}
 import 'vue2-datepicker/index.css';
 import 'vue2-datepicker/locale/lt';
 export default {
@@ -157,7 +144,6 @@ export default {
             this.busy = false;
         },
         handlePick(newDate) {
-            console.log(newDate);
             if(!this.filter.dates[0]) {
                 this.filter.dates[0] = new Date(newDate.getTime() + 30 * 24 * 3600 * 1000);
                 this.filter.dates[1] = new Date(newDate.getTime() + 30 * 24 * 3600 * 1000);
