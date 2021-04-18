@@ -5,13 +5,26 @@
             <div class="filter">
                 <form @submit.prevent="filterList" class="d-inline">
                     <div class="form-group d-inline-block">
-                        <label>Datos</label>
+                        <label class="font-weight-bold">Datos</label>
                         <date-picker 
                             v-model="date" 
                             type="date" range 
                             placeholder="Nurodykite datas"
+                            class="d-block"
+                            input-class="form-control"
                             :disabled-date="disabledTomorrowAndLater">
                         </date-picker>
+                    </div>
+                    <div class="form-group d-inline-block">
+                        <label class="font-weight-bold">Raktažodis</label>
+                        <input type="text" class="form-control" placeholder="Įveskite raktažodį" v-model="keyword">
+                    </div>
+                    <div class="form-group  d-inline-block">
+                        <label for="key-select" class="font-weight-bold">API raktas</label>
+                        <select class="custom-select" id="key-select" v-model="key">
+                            <option value="" disabled>Pasirinkite API raktą</option>
+                            <option :value="key.id" v-for="key in keys" :key="key.id">{{ key.name }}</option>
+                        </select>
                     </div>
                     <button type="submit" class="btn btn-primary d-inline-block">Filtruoti</button>
                 </form>
@@ -70,6 +83,9 @@
             return {
                 texts: [],
                 date: [],
+                keyword: "",
+                key: "",
+                keys: [],
                 deleteId: 0,
                 perPage: 10,
                 currentPage: 1,
@@ -115,6 +131,7 @@
                 .then(response => {
                     this.texts = response.data;
                     this.loadLanguages();
+                    this.fetchApiKeys();
                 });
         },
         computed: {
@@ -138,15 +155,23 @@
             },
             filterList() {
                 this.isBusy = true;
-                const date1 = new Date();
-                date1.setTime(this.date[0].getTime() + 3600 * 1000 * 26 - 1);
-                const date2 = new Date();
-                date2.setTime(this.date[1].getTime() + 3600 * 1000 * 26 - 1);
+                var date1 = "";
+                var date2 = "";
+                if(this.date[0]) {
+                    var date1 = new Date();
+                    date1.setTime(this.date[0].getTime() + 3600 * 1000 * 26 - 1);
+                }
+                if(this.date[1]) {
+                    var date2 = new Date();
+                    date2.setTime(this.date[1].getTime() + 3600 * 1000 * 26 - 1);
+                }
                 this.axios
                     .get('/api/texts/filter', {
                         params: {
                             date1: date1,
-                            date2: date2
+                            date2: date2,
+                            keyword: this.keyword,
+                            key: this.key
                         }
                     })
                     .then(response => {
@@ -167,6 +192,13 @@
                 today.setHours(0, 0, 0, 0);
 
                 return date > today;
+            },
+            fetchApiKeys() {
+                this.axios
+                    .get('/api/keys')
+                    .then(response => {
+                        this.keys = response.data;
+                    });
             },
         }
     }
