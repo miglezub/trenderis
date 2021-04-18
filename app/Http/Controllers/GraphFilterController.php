@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class GraphFilterController extends Controller
 {
@@ -18,29 +20,115 @@ class GraphFilterController extends Controller
     public function filter(Request $request) {
         $start = microtime(true);
         $user = $request->user();
-        if($user) {
-            $texts = $user->texts();
-            $textsQuery = $user->texts();
-            if (isset($request->filter)) {
-                $filter = json_decode($request->filter);
-            } else {
-                $filter = $request;
+        if($user && isset($request-> type)) {
+            switch ($request->type) {
+                case 1:
+                    $minDate = $user->texts->last();
+                    if(!empty($request->date1) && $request->date1 > $minDate->created_at) {
+                        $request->date1 = $minDate->created_at;
+                    }
+                    $response = $this->filterTendency($request);
+                    $title = 'Populiariausi raktažodžiai ';
+                    if(!empty($request->date1)) {
+                        $title .= '(' . Carbon::parse($request->date1)->format("Y-m-d");
+                        if(!empty($request->date2)) {
+                            $title .= ' - ' . Carbon::parse($request->date2)->format("Y-m-d");
+                        }
+                        $title .= ')';
+                    }
+                    break;
+                case 2:
+                    $response = $this->filterKeyword($request);
+                    $title = 'Raktažodžio "' . $request->keyword . '" istorinis grafikas ';
+                    if(!empty($request->date1)) {
+                        $title .= '(' . Carbon::parse($request->date1)->format("Y-m-d");
+                        if(!empty($request->date2)) {
+                            $title .= ' - ' . Carbon::parse($request->date2)->format("Y-m-d");
+                        }
+                        $title .= ')';
+                    }
+                    break;
+                default:
+                    $response = array();
             }
-            if($request->date1) {
-                $textsQuery->whereDate('created_at', '>=', $request->date1);
-            }
-            if($request->date2 && $request->date2 != $request->date1) {
-                $textsQuery->whereDate('created_at', '<=', $request->date2);
-            }
-            if($request->key) {
-                $textsQuery->where('api_key_id', '=', $request->key);
-            }
-            $texts = $textsQuery->get()->toArray();
             $end = microtime(true);
-            return response()->json(array('results' => $this->getResults($texts), 'time' => $end - $start));
+            return response()->json(array('results' => $response, 'time' => $end - $start, 'title' => $title));
         } else {
             return redirect('/login');
         }
+    }
+
+    private function filterTendency(Request $request) {
+        $user = $request->user();
+        $textsQuery = $user->texts();
+        if(!empty($request->date1)) {
+            $textsQuery->whereDate('created_at', '>=', $request->date1);
+        }
+        if(!empty($request->date2) && $request->date2 != $request->date1) {
+            $textsQuery->whereDate('created_at', '<=', $request->date2);
+        }
+        if(!empty($request->key)) {
+            $textsQuery->where('api_key_id', '=', $request->key);
+        }
+        $texts = $textsQuery->get()->toArray();
+        return $this->getResults($texts);
+    }
+
+    private function filterKeyword(Request $request) {
+        $user = $request->user();
+        $textsQuery =  DB::table('texts')
+                        ->join('text_analysis', 'texts.id', '=', 'text_analysis.text_id')
+                        ->select(DB::raw('DATE(texts.created_at) as created_at'), 'text_analysis.results')
+                        ->where('texts.user_id', '=', $user->id);
+        if(!empty($request->date1)) {
+            $textsQuery->whereDate('texts.created_at', '>=', $request->date1);
+        }
+        if(!empty($request->date2) && $request->date2 != $request->date1) {
+            $textsQuery->whereDate('texts.created_at', '<=', $request->date2);
+        }
+        if(!empty($request->key)) {
+            $textsQuery->where('api_key_id', '=', $request->key);
+        }
+        if(!empty($request->keyword)) {
+            $keyword = strip_tags($request->keyword);
+            $keyword = mb_strtolower($keyword);
+            $keyword = str_replace(array('.', ',', "\n", "\t", "\r", "!", "?", ":", ";", "(", ")", "[", "]", "\"", "“", "„", " – "), ' ', $keyword);
+            $textsQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
+        }
+        $texts = $textsQuery->orderBy('texts.id', 'ASC')
+                ->orderBy('text_analysis.created_at', 'ASC')
+                ->groupBy('texts.id')
+                ->get();
+        $results = array();
+        foreach($texts as $text) {
+            if(!key_exists($text->created_at, $results)) {
+                $results[$text->created_at] = array();
+                $results[$text->created_at]['date'] = '';
+                $results[$text->created_at]['freq'] = 0;
+                $results[$text->created_at]['tfidf'] = 0;
+                $results[$text->created_at]['total'] = 0;
+            }
+            $results[$text->created_at]['date'] = $text->created_at;
+            if(!empty($request->keyword)) {
+                $pos = strpos($text->results, $request->keyword);
+                if($pos) {
+                    $results[$text->created_at]['total']++;
+                    $ending = strpos($text->results, "}", $pos) + 1;
+                    $res = substr($text->results, 0, $ending);
+                    $start = strrpos($res, "{");
+                    $res = json_decode(substr($res, $start, $ending));
+                    $results[$text->created_at]['freq'] += $res->freq;
+                    $results[$text->created_at]['tfidf'] += $res->tfidf;
+                }
+            } else {
+                $results[$text->created_at]['total']++;
+            }
+        }
+        $res = array();
+        foreach($results as $key => $result) {
+            $res[] = $results[$key];
+        }
+        return $res;
     }
 
     private function getResults($texts) {
