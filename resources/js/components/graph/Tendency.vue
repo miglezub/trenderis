@@ -35,6 +35,7 @@
         chartOptions: {
             responsive: true,
             maintainAspectRatio: false,
+            defaultFontFamily: '"Montserrat", sans-serif',
             scales: {
                 yAxes: [{
                     id: 'freq',
@@ -50,6 +51,11 @@
                 display: true,
                 position: 'bottom'
             },
+            title: {
+                display: true,
+                fontSize: 18,
+                text: "",
+            }
         },
         labels: [],
         freq: [],
@@ -64,55 +70,10 @@
         date.setHours(0);
         date.setMinutes(59);
         date.setSeconds(59);
-        var filter = {dates: [date, ""]};
+        var filter = {dates: [date, ""], type: 1};
         this.filterGraph(filter);
     },
     methods: {
-        fillData () {
-          this.chartReady = false;
-          var that = this;
-          this.axios
-            .get('/api/dayResults')
-            .then(response => {
-                response.data.results.forEach(function(result) {
-                    that.labels.push(result.w);
-                    that.freq.push(result.freq);
-                    if(result.tfidf) {
-                        that.tfidf.push(result.tfidf);
-                    } else {
-                        that.tfidf.push(result.tf);
-                    }
-                });
-
-                if((response.data.results).length < 1) {
-                    that.chartEmpty = true;
-                } else {
-                    that.chartEmpty = false;
-                }
-
-                that.datacollection = {
-                    labels: that.labels,
-                    datasets: [
-                    {
-                        type: 'bar',
-                        label: 'Dažnis',
-                        yAxisID: 'freq',
-                        data: that.freq,
-                        backgroundColor: "#F26D3D98"
-                    },
-                    {
-                        type: 'line',
-                        label: 'TF-IDF',
-                        yAxisID: 'tfidf',
-                        data: that.tfidf,
-                        backgroundColor: "#6CCED985",
-                        color: "#1B91BF"
-                    }
-                ]
-                };
-                this.chartReady = true;
-            });
-        },
         filterModal() {
             $('#filterModal').modal('show');
         },
@@ -147,15 +108,24 @@
                     }
                 })
                 .then(response => {
-                    response.data.results.forEach(function(result) {
-                        that.labels.push(result.w);
-                        that.freq.push(result.freq);
-                        if(result.tfidf) {
-                            that.tfidf.push(result.tfidf);
-                        } else {
-                            that.tfidf.push(result.tf);
-                        }
-                    });
+                    that.chartOptions.title.text = response.data.title;
+                    if(filter.type == 1) {
+                        response.data.results.forEach(function(result) {
+                            that.labels.push(result.w);
+                            that.freq.push(result.freq);
+                            if(result.tfidf) {
+                                that.tfidf.push(result.tfidf);
+                            } else {
+                                that.tfidf.push(result.tf);
+                            }
+                        });
+                    } else {
+                        response.data.results.forEach(function(result) {
+                            that.labels.push(result.date);
+                            that.freq.push(result.freq);
+                            that.tfidf.push(result.total);
+                        });
+                    }
 
                     if((response.data.results).length < 1) {
                         that.chartEmpty = true;
@@ -163,26 +133,49 @@
                         that.chartEmpty = false;
                     }
 
-                    that.datacollection = {
-                        labels: that.labels,
-                        datasets: [
-                        {
-                            type: 'bar',
-                            label: 'Dažnis',
-                            yAxisID: 'freq',
-                            data: that.freq,
-                            backgroundColor: "#F26D3D98"
-                        },
-                        {
-                            type: 'line',
-                            label: 'TF-IDF',
-                            yAxisID: 'tfidf',
-                            data: that.tfidf,
-                            backgroundColor: "#6CCED985",
-                            color: "#1B91BF"
-                        }
-                    ]
-                };
+                    if(filter.type == 1) {
+                        that.datacollection = {
+                            labels: that.labels,
+                            datasets: [
+                            {
+                                type: 'bar',
+                                label: 'Dažnis',
+                                yAxisID: 'freq',
+                                data: that.freq,
+                                backgroundColor: "#F26D3D98"
+                            },
+                            {
+                                type: 'line',
+                                label: 'TF-IDF',
+                                yAxisID: 'tfidf',
+                                data: that.tfidf,
+                                backgroundColor: "#6CCED985",
+                                color: "#1B91BF"
+                            }
+                            ]
+                        };
+                    } else {
+                        that.datacollection = {
+                            labels: that.labels,
+                            datasets: [
+                            {
+                                type: 'line',
+                                label: 'Dažnis',
+                                yAxisID: 'freq',
+                                data: that.freq,
+                                backgroundColor: "#F26D3D98"
+                            },
+                            {
+                                type: 'line',
+                                label: 'Straipsnių kiekis',
+                                yAxisID: 'tfidf',
+                                data: that.tfidf,
+                                backgroundColor: "#6CCED985",
+                                color: "#1B91BF"
+                            }
+                            ]
+                        };
+                    }
                 this.chartReady = true;
             });
         }
