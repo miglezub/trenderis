@@ -101,12 +101,12 @@ export default {
                 },
                 dates: {
                     required: requiredIf(function (filter) {
-                        return filter.key == "" || filter.dates[0] == null;
+                        return filter.type == 1 && (filter.key == "" || filter.dates[0] == null);
                     })
                 },
                 key: {
                     required: requiredIf(function (filter) {
-                        return (filter.dates).length < 1 || filter.dates[0] == null;
+                        return filter.type == 1 && ((filter.dates).length < 1 || filter.dates[0] == null);
                     })
                 }
             }
