@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\TextAnalysis;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class TextController extends Controller
 {
@@ -30,20 +32,33 @@ class TextController extends Controller
     {
         $user = $request->user();
         if($user) {
-            $texts = $user->texts();
-            $textsQuery = $user->texts();
+            $textsQuery =  DB::table('texts')
+                        ->join('text_analysis', 'texts.id', '=', 'text_analysis.text_id')
+                        ->select('texts.*')
+                        ->where('texts.user_id', '=', $user->id);
             if($request->date1) {
-                $textsQuery->whereDate('created_at', '>=', $request->date1);
+                $textsQuery->whereDate('texts.created_at', '>=', $request->date1);
             }
             if($request->date2) {
-                $textsQuery->whereDate('created_at', '<=', $request->date2);
+                $textsQuery->whereDate('texts.created_at', '<=', $request->date2);
+            }
+            if($request->key) {
+                $textsQuery->where('api_key_id', '=', $request->key);
+            }
+            if(!empty($request->keyword)) {
+                $keyword = strip_tags($request->keyword);
+                $keyword = mb_strtolower($keyword);
+                $keyword = str_replace(array('.', ',', "\n", "\t", "\r", "!", "?", ":", ";", "(", ")", "[", "]", "\"", "“", "„", " – "), ' ', $keyword);
+                $textsQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
             }
             $texts = $textsQuery->get()->toArray();
             foreach($texts as $key => $text) {
-                if(strlen($text['original_text']) > 200) {
-                    $texts[$key]['original_text'] = nl2br(substr($text['original_text'], 0, strpos($text['original_text'], " " , 200))) . " ...";
-                } else {
-                    $texts[$key]['original_text'] = nl2br($text['original_text']);
+                if(strlen($text->title) == 0) {
+                    if(strlen($text->original_text) > 150) {
+                        $texts[$key]['title'] = nl2br(substr($text['original_text'], 0, strpos($text->original_text, " " , 150))) . " ...";
+                    } else {
+                        $texts[$key]['title'] = nl2br($text->original_text);
+                    }
                 }
             }
             return array_reverse($texts);
@@ -175,11 +190,11 @@ class TextController extends Controller
 
     public function import()
     {
-        set_time_limit(150);
         $user = \App\Models\User::find(1);
+        set_time_limit(300);
         $ch = curl_init();
+        $page = Cache::get('botis_page');
 
-        $page = 1;
         curl_setopt($ch, CURLOPT_URL, config('constants.botis_url') . "&page=" . $page);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         $output = curl_exec($ch);
@@ -187,25 +202,31 @@ class TextController extends Controller
 
         $json = json_decode($output, true);
         foreach($json as $text) {
-            $newText = $user->texts()->create([
-                'original_text' => html_entity_decode($text['description']),
-                'title' => html_entity_decode($text['title']),
-                'language_id' => 1,
-                'use_idf' => 1,
-                'use_word2vec' => 0,
-                'created_at' => $text['created_at']
-            ]);
-    
-            if($newText) {
-                $analysis = $newText->text_analysis()->create([
-                    'lemmatized_text' => '',
-                    'results' => '',
+            if(!$user->texts()->where('title', '=', html_entity_decode($text['title']))->first()) {
+                $newText = $user->texts()->create([
+                    'original_text' => html_entity_decode($text['description']),
+                    'title' => html_entity_decode($text['title']),
+                    'language_id' => 1,
                     'use_idf' => 1,
-                    'use_word2vec' => 0
+                    'use_word2vec' => 0,
+                    'created_at' => $text['created_at']
                 ]);
-                $analysisController = new TextAnalysisController();
-                $analysisController->analyse($analysis->id, auth()->user()->id);
+        
+                if($newText) {
+                    $analysis = $newText->text_analysis()->create([
+                        'lemmatized_text' => '',
+                        'results' => '',
+                        'use_idf' => 1,
+                        'use_word2vec' => 0
+                    ]);
+                    $analysisController = new TextAnalysisController();
+                    $analysisController->analyse($analysis->id, auth()->user()->id);
+                }
             }
+        }
+
+        if($page > 1) {
+            Cache::put('botis_page', $page - 1);
         }
     }
 
