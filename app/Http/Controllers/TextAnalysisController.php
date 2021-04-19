@@ -113,7 +113,8 @@ class TextAnalysisController extends Controller
             }
         }
         usort($results, array($this, "cmp"));
+        $top_results = array_splice($results, 0, 5, true);
         $end = microtime(true);
-        $analysis->update(['results' => json_encode($results, JSON_INVALID_UTF8_IGNORE), 'duration' => $end - $start]);
+        $analysis->update(['results' => json_encode($results, JSON_INVALID_UTF8_IGNORE), 'top_results' => $top_results, 'duration' => $end - $start]);
     }
 }
