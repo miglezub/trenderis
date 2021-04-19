@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Text;
 use App\Models\TextAnalysis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,9 +11,12 @@ use Illuminate\Support\Facades\Cache;
 class TextController extends Controller
 {
     public function index(Request $request) {
+        $page = isset($request->page) ? $request->page : 1;
+        $limit = isset($request->limit) ? $request->limit : 10;
+
         $user = $request->user();
         if($user) {
-            $texts = $user->texts()->get()->toArray();
+            $texts = $user->texts()->orderBy('created_at', 'DESC')->offset(($page-1) * $limit)->limit($limit)->get()->toArray();
             foreach($texts as $key => $text) {
                 if(strlen($text['title']) == 0) {
                     if(strlen($text['original_text']) > 150) {
@@ -21,8 +25,26 @@ class TextController extends Controller
                         $texts[$key]['title'] = nl2br($text['original_text']);
                     }
                 }
+                $analysis = $user->texts->find($text['id'])->text_analysis->last();
+                $texts[$key]['top_results'] = array();
+                if($analysis) {
+                    if($analysis->top_results) {
+                        foreach(json_decode($analysis->top_results) as $result) {
+                            $texts[$key]['top_results'][] = $result->w;
+                        }
+                    } else {
+                        $res = json_decode($analysis->results);
+                        if($res) {
+                            $top = array_splice($res, 0, 5, true);
+                            foreach($top as $result) {
+                                $texts[$key]['top_results'][] = $result->w;
+                            }
+                            $analysis->update(['top_results' => json_encode($top) ]);
+                        }
+                    }
+                }
             }
-            return array_reverse($texts);
+            return array('results' => $texts, 'total' => $user->texts()->count());
         } else {
             return redirect('/login');
         }
@@ -191,7 +213,7 @@ class TextController extends Controller
     public function import()
     {
         $user = \App\Models\User::find(1);
-        set_time_limit(300);
+        set_time_limit(450);
         $ch = curl_init();
         $page = Cache::get('botis_page');
 
