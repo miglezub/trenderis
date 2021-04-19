@@ -14,7 +14,8 @@ class TextAnalysis extends Model
         'use_idf',
         'lemmatized_text',
         'results',
-        'duration'
+        'duration',
+        'top_results'
     ]; 
 
     public function text()

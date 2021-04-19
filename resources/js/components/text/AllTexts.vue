@@ -36,7 +36,7 @@
                 striped hover show-empty sort-icon-left
                 :items="texts"
                 :fields="fields"
-                :per-page="perPage"
+                :per-page="0"
                 :current-page="currentPage"
                 :busy.sync="isBusy"
                 >
@@ -45,6 +45,9 @@
                 </template>
                 <template v-slot:cell(title)="data">
                     <div v-html="data.item.title"></div>
+                </template>
+                <template v-slot:cell(top_results)="data">
+                    <div v-html="data.item.top_results.join(', ')"></div>
                 </template>
                 <template v-slot:cell(buttons)="data">
                     <b-button-group class="float-right">
@@ -61,11 +64,11 @@
             </b-table>
             <b-pagination
                 v-model="currentPage"
-                :total-rows="rows"
+                :total-rows="totalTexts"
                 :per-page="perPage"
                 aria-controls="texts-table"
                 align="right"
-                v-if="texts.length > 10"
+                v-if="totalTexts > 10"
                 ></b-pagination>
         </div>
         <delete-confirm title="Teksto ištrynimas" message="Ar tikrai norite ištrinti tekstą?<br>Pašalinus tekstą bus ištrinti ir jo analizės rezultatai." :id="deleteId" v-on:approvedDeletion="deleteText"></delete-confirm>
@@ -82,6 +85,7 @@
         data() {
             return {
                 texts: [],
+                totalTexts: 0,
                 date: [],
                 keyword: "",
                 key: "",
@@ -95,6 +99,11 @@
                     {
                         key: 'title',
                         label: 'Pavadinimas',
+                        sortable: false
+                    },
+                    {
+                        key: 'top_results',
+                        label: 'Raktažodžiai',
                         sortable: false
                     },
                     {
@@ -125,11 +134,12 @@
                 ],
             }
         },
-        created() {
+        mounted() {
             this.axios
                 .get('/api/texts')
                 .then(response => {
-                    this.texts = response.data;
+                    this.texts = response.data.results;
+                    this.totalTexts = response.data.total;
                     this.loadLanguages();
                     this.fetchApiKeys();
                 });
@@ -139,7 +149,22 @@
                 return this.texts.length
             }
         },
+        watch: {
+            currentPage: {
+                handler: function(value) {
+                    this.fetchData();
+                }
+            }
+        },
         methods: {
+            async fetchData() {
+                this.axios
+                .get(`/api/texts?page=${this.currentPage}`)
+                .then(response => {
+                    this.texts = response.data.results;
+                    this.totalTexts = response.data.total;
+                });
+            },
             triggerDelete(id) {
                 this.deleteId = id;
                 $('#deleteModal').modal('show');
