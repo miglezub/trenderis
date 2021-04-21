@@ -41,10 +41,16 @@
                     id: 'freq',
                     type: 'linear',
                     position: 'left',
+                    ticks: {
+                        min: 0
+                    }
                 }, {
                     id: 'tfidf',
                     type: 'linear',
                     position: 'right',
+                    ticks: {
+                        min: 0
+                    }
                 }]
             },
             legend: {
@@ -103,7 +109,7 @@
                         type: filter.type,
                         date1: date1,
                         date2: date2,
-                        key: filter.key,
+                        api_key: filter.key,
                         keyword: filter.keyword
                     }
                 })
@@ -114,7 +120,7 @@
                             that.labels.push(result.w);
                             that.freq.push(result.freq);
                             if(result.tfidf) {
-                                that.tfidf.push(result.tfidf);
+                                that.tfidf.push(parseFloat(result.tfidf).toFixed(4));
                             } else {
                                 that.tfidf.push(result.tf);
                             }
