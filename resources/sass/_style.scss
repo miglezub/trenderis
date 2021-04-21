@@ -430,6 +430,11 @@ svg {
         &:hover, &:focus {
           border-color: #e3342f !important;
         }
+        &.is-invalid {
+            .mx-icon-calendar {
+                display: none;
+            }
+        }
       }
       .mx-icon-calendar {
           display: none;
@@ -452,4 +457,50 @@ svg {
         width: 3rem;
         height: 3rem;
     }
+  }
+  .custom-select, .btn {
+      vertical-align: baseline;
+  }
+  .filter {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: baseline;
+      @include md {
+        flex-wrap: wrap;
+        flex-direction: column;
+      }
+      form {
+          flex-basis: 84%;
+          .form-group {
+            display:inline-block;
+          }
+          @include lg {
+            display: flex;
+            flex-wrap: wrap;
+            flex-direction: column;
+            flex-basis: 80%;
+            padding-bottom: 16px;
+            .form-group {
+                flex-basis: 50%;
+                display: block;
+                input, select {
+                    max-width: 318px;
+                    display: block;
+                }
+            }
+            .btn {
+                width: min-content;
+            }
+          }
+      }
+      a.btn {
+          height: min-content;
+          width: min-content;
+          flex-basis: 16%;
+          @include lg {
+            flex-basis: 20%;
+            align-self: end;
+            margin-bottom: 16px;
+          }
+      }
   }
