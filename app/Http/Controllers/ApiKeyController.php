@@ -48,9 +48,10 @@ class ApiKeyController extends Controller
         $user = $request->user();
         if($user) {
             $apiKey = $user->apiKeys()->find($id);
-            // foreach($text->text_analysis as $analysis) {
-            //     $analysis->delete();
-            // }
+            foreach($apiKey->texts as $text) {
+                $text->api_key_id = NULL;
+                $text->save();
+            }
             $apiKey->delete();
             return response()->json(['success' => 'API raktas ištrintas']);
         } else {
