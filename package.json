@@ -36,6 +36,7 @@
         "vue-chartjs": "^3.5.1",
         "vue-clipboard2": "^0.3.1",
         "vue-router": "^3.5.1",
+        "vue-sweetalert-icons": "^4.3.0",
         "vue2-datepicker": "^3.9.0",
         "vuelidate": "^0.7.6"
     }

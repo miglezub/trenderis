@@ -17,6 +17,7 @@ import Vue from 'vue';
 import Vuelidate from 'vuelidate';
 import { BootstrapVue } from 'bootstrap-vue';
 import VueClipboard from 'vue-clipboard2';
+import SweetAlertIcons from 'vue-sweetalert-icons';
 
 /**
  * The following block of code may be used to automatically register your
@@ -43,6 +44,7 @@ Vue.use(VueAxios, axios);
 Vue.use(Vuelidate);
 Vue.use(BootstrapVue);
 Vue.use(VueClipboard);
+Vue.use(SweetAlertIcons);
 
 const router = new VueRouter({
     mode: 'history',
