@@ -20,7 +20,7 @@ class TextController extends Controller
             foreach($texts as $key => $text) {
                 if(strlen($text['title']) == 0) {
                     if(strlen($text['original_text']) > 150) {
-                        $texts[$key]['title'] = nl2br(substr($text['original_text'], 0, strpos($text['original_text'], " " , 150))) . " ...";
+                        $texts[$key]['title'] = nl2br(substr($text->original_text, 0, strpos($text['original_text'], " " , 150))) . " ...";
                     } else {
                         $texts[$key]['title'] = nl2br($text['original_text']);
                     }
@@ -52,38 +52,68 @@ class TextController extends Controller
 
     public function filter(Request $request)
     {
+        $page = isset($request->page) ? $request->page : 1;
+        $limit = isset($request->limit) ? $request->limit : 10;
+
         $user = $request->user();
         if($user) {
             $textsQuery =  DB::table('texts')
                         ->join('text_analysis', 'texts.id', '=', 'text_analysis.text_id')
                         ->select('texts.*')
                         ->where('texts.user_id', '=', $user->id);
+            $textsTotalQuery =  DB::table('texts')
+                        ->join('text_analysis', 'texts.id', '=', 'text_analysis.text_id')
+                        ->select('texts.*')
+                        ->where('texts.user_id', '=', $user->id);    
             if($request->date1) {
                 $textsQuery->whereDate('texts.created_at', '>=', $request->date1);
+                $textsTotalQuery->whereDate('texts.created_at', '>=', $request->date1);
             }
             if($request->date2) {
                 $textsQuery->whereDate('texts.created_at', '<=', $request->date2);
+                $textsTotalQuery->whereDate('texts.created_at', '<=', $request->date2);
             }
             if($request->key) {
                 $textsQuery->where('api_key_id', '=', $request->key);
+                $textsTotalQuery->where('api_key_id', '=', $request->key);
             }
             if(!empty($request->keyword)) {
                 $keyword = strip_tags($request->keyword);
                 $keyword = mb_strtolower($keyword);
                 $keyword = str_replace(array('.', ',', "\n", "\t", "\r", "!", "?", ":", ";", "(", ")", "[", "]", "\"", "“", "„", " – "), ' ', $keyword);
                 $textsQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
+                $textsTotalQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
             }
-            $texts = $textsQuery->get()->toArray();
+            $texts = $textsQuery->orderBy('created_at', 'DESC')->groupBy('texts.id')->offset(($page-1) * $limit)->limit($limit)->get()->toArray();
+            $total = count($textsTotalQuery->groupBy('texts.id')->get());
             foreach($texts as $key => $text) {
                 if(strlen($text->title) == 0) {
                     if(strlen($text->original_text) > 150) {
-                        $texts[$key]['title'] = nl2br(substr($text['original_text'], 0, strpos($text->original_text, " " , 150))) . " ...";
+                        $texts[$key]->title = nl2br(substr($text->original_text, 0, strpos($text->original_text, " " , 150))) . " ...";
                     } else {
-                        $texts[$key]['title'] = nl2br($text->original_text);
+                        $texts[$key]->title = nl2br($text->original_text);
+                    }
+                }
+                $analysis = $user->texts->find($text->id)->text_analysis->last();
+                $texts[$key]->top_results = array();
+                if($analysis) {
+                    if($analysis->top_results) {
+                        foreach(json_decode($analysis->top_results) as $result) {
+                            $texts[$key]->top_results[] = $result->w;
+                        }
+                    } else {
+                        $res = json_decode($analysis->results);
+                        if($res) {
+                            $top = array_splice($res, 0, 5, true);
+                            foreach($top as $result) {
+                                $texts[$key]->top_results[] = $result->w;
+                            }
+                            $analysis->update(['top_results' => json_encode($top) ]);
+                        }
                     }
                 }
             }
-            return array_reverse($texts);
+            return array('results' => $texts, 'total' => $total);
         } else {
             return redirect('/login');
         }
