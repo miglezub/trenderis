@@ -59,8 +59,10 @@
                 ></b-pagination>
         </div>
         <delete-confirm title="API rakto ištrynimas" message="Ar tikrai norite ištrinti API raktą?<br>Pašalinus API raktą, išorinės sistemos naudojusios šį API raktą praras prieigą prie šios sistemos.<br>Tekstai pridėti iš šio API rakto nebus ištrinti." :id="deleteId" v-on:approvedDeletion="deleteApiKey"></delete-confirm>
-        <edit-key ref="editComponent" v-on:editSuccess="editSuccessMsg"></edit-key>
+        <edit-key ref="editComponent" v-on:editSuccess="editSuccessMsg" v-on:editError="showEditError()"></edit-key>
         <message type="success" id="successModal" title="API rakto generavimas" message="API raktas sugeneruotas.<br>Naujo rakto duomenys pateikiami API raktų sąraše"></message>
+        <message id="errorMessage" type="error" title="Sistemos klaida" message="Atsiprašome, įvyko nenumatyta sistemos klaida."></message>
+        <message id="errorEdit" type="error" title="Sistemos klaida" message="Atsiprašome, įvyko nenumatyta sistemos klaida. API rakto redaguoti nepavyko."></message>
     </div>
 </template>
  
@@ -123,6 +125,9 @@
                 this.isBusy = true;
                 this.axios
                     .get('/api/keys')
+                    .catch(function (error) {
+                        $('#errorMessage').modal('show');
+                    })
                     .then(response => {
                         this.apiKeys = response.data;
                         this.isBusy = false;
@@ -136,6 +141,9 @@
                 var that = this;
                 this.axios
                     .post('/api/keys', this.key)
+                    .catch(function (error) {
+                        $('#errorMessage').modal('show');
+                    })
                     .then(function(response) {
                         that.generateBusy = false;
                         if(response.data.error) {
@@ -155,6 +163,9 @@
             deleteApiKey(id) { 
                 this.axios
                     .delete(`/api/keys/${id}`)
+                    .catch(function (error) {
+                        $('#errorMessage').modal('show');
+                    })
                     .then(response => {
                         let i = this.apiKeys.map(data => data.id).indexOf(id);
                         this.apiKeys.splice(i, 1);
@@ -176,6 +187,9 @@
             },
             showAlert() {
                 this.dismissCountDown = this.dismissSecs
+            },
+            showEditError() {
+                $('#errorEdit').modal('show');
             },
             onCopy: function (e) {
                 console.log(e.trigger);
