@@ -12,7 +12,10 @@
                     <div class="modal-body">
                             <div class="form-group">
                                 <label for="language-select" class="font-weight-bold">API rakto pavadinimas</label>
-                                <input type="text" class="form-control" name="name" v-model="key.name" placeholder="API rakto pavadinimas">
+                                <input type="text" class="form-control" name="name" v-model="key.name" placeholder="API rakto pavadinimas" v-bind:class="{ 'is-invalid': submitted && (!$v.key.name.required || !$v.key.name.minLength || !$v.key.name.maxLength) }">
+                                <div v-if="submitted && !$v.key.name.required" class="invalid-feedback">Privaloma suvesti API rakto pavadinimą</div>
+                                <div v-else-if="submitted && !$v.key.name.minLength" class="invalid-feedback">API rakto pavadinimas turi būti ilgesnis nei 4 simboliai</div>
+                                <div v-else-if="submitted && !$v.key.name.maxLength" class="invalid-feedback">API rakto pavadinimas turi būti trumpesnis nei 255 simboliai</div>
                             </div>
                     </div>
                     <div class="modal-footer">
@@ -33,7 +36,7 @@
     </div>
 </template>
 <script>
-import { required, minLength } from "vuelidate/lib/validators";
+import { required, minLength, maxLength } from "vuelidate/lib/validators";
     export default {
         data() {
             return {
@@ -45,7 +48,7 @@ import { required, minLength } from "vuelidate/lib/validators";
         },
         validations: {
             key: {
-                name: { required, minLength: minLength(4) },
+                name: { required, minLength: minLength(4), maxLength: maxLength(255) },
             }
         },
         methods: {
@@ -68,21 +71,25 @@ import { required, minLength } from "vuelidate/lib/validators";
 
                 this.$v.$touch();
                 if (this.$v.$invalid) {
+                    this.busy = false;
                     return;
                 }
-
+                this.submitted = false;
                 this.axios
                     .patch(`/api/keys/${this.id}`, this.key)
                     .then(function(response) {
                         that.busy = false;
                         if(response.data.error) {
-                            console.log(response.error);
                         } else {
                             $('#editKeyModal').modal('hide');
                             that.$emit('editSuccess', response.data.success);
                         }
                     })
-                    .catch(err => console.log(err))
+                    .catch(function (error) {
+                        $('#editKeyModal').modal('hide');
+                        that.busy = false;
+                        that.$emit('editError');
+                    })
                     .finally(() => this.loading = false)
             },
         }
