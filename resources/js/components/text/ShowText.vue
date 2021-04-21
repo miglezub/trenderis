@@ -184,7 +184,11 @@
                         label: 'IDF',
                         sortable: true,
                         formatter: value => {
-                            return value.toFixed(4);
+                            if(value) {
+                                return value.toFixed(4);
+                            } else {
+                                return "";
+                            }
                         }
                     };
                     this.fields.push(field);
@@ -193,7 +197,11 @@
                         label: 'TF-IDF',
                         sortable: true,
                         formatter: value => {
-                            return value.toFixed(4);
+                            if(value) {
+                                return value.toFixed(4);
+                            } else {
+                                return "";
+                            }
                         }
                     };
                     this.fields.push(field);
