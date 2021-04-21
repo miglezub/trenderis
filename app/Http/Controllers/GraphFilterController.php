@@ -137,27 +137,29 @@ class GraphFilterController extends Controller
             $analysis = \App\Models\TextAnalysis::where('text_id', '=', $text['id'])->orderBy('updated_at')->take(1)->get()->last();
             if($analysis && $analysis->results) {
                 foreach(json_decode($analysis->results) as $a) {
-                    if(!key_exists($a->w, $results)) {
-                        $results[$a->w] = array();
-                        $results[$a->w]['freq'] = $a->freq;
-                        $results[$a->w]['tf'] = $a->tf;
-                        if(isset($a->tfidf)) {
-                            if(key_exists('tfidf', $results[$a->w])) {
+                    if(!is_bool($a)) {
+                        if(!key_exists($a->w, $results)) {
+                            $results[$a->w] = array();
+                            $results[$a->w]['freq'] = $a->freq;
+                            $results[$a->w]['tf'] = $a->tf;
+                            if(isset($a->tfidf)) {
+                                if(key_exists('tfidf', $results[$a->w])) {
+                                    $results[$a->w]['tfidf'] += $a->tfidf;
+                                } else {
+                                    $results[$a->w]['tfidf'] = $a->tfidf;
+                                }
+                            }
+                        } else {
+                            $results[$a->w]['freq'] += $a->freq;
+                            $results[$a->w]['tf'] += $a->tf;
+                            if(!key_exists('tfidf', $results[$a->w])) {
+                                $results[$a->w]['tfidf'] = 0;
+                            }
+                            if(isset($a->tfidf)) {
                                 $results[$a->w]['tfidf'] += $a->tfidf;
                             } else {
-                                $results[$a->w]['tfidf'] = $a->tfidf;
+                                $results[$a->w]['tfidf'] += $a->tf;
                             }
-                        }
-                    } else {
-                        $results[$a->w]['freq'] += $a->freq;
-                        $results[$a->w]['tf'] += $a->tf;
-                        if(!key_exists('tfidf', $results[$a->w])) {
-                            $results[$a->w]['tfidf'] = 0;
-                        }
-                        if(isset($a->tfidf)) {
-                            $results[$a->w]['tfidf'] += $a->tfidf;
-                        } else {
-                            $results[$a->w]['tfidf'] += $a->tf;
                         }
                     }
                 }
