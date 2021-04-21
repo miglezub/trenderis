@@ -60,17 +60,17 @@
         </div>
         <delete-confirm title="API rakto ištrynimas" message="Ar tikrai norite ištrinti API raktą?<br>Pašalinus API raktą, išorinės sistemos naudojusios šį API raktą praras prieigą prie šios sistemos.<br>Tekstai pridėti iš šio API rakto nebus ištrinti." :id="deleteId" v-on:approvedDeletion="deleteApiKey"></delete-confirm>
         <edit-key ref="editComponent" v-on:editSuccess="editSuccessMsg"></edit-key>
-        <success-modal title="API rakto generavimas" message="API raktas sugeneruotas.<br>Naujo rakto duomenys pateikiami API raktų sąraše"></success-modal>
+        <message type="success" id="successModal" title="API rakto generavimas" message="API raktas sugeneruotas.<br>Naujo rakto duomenys pateikiami API raktų sąraše"></message>
     </div>
 </template>
  
 <script>
     import DeleteConfirm from '../layout/DeleteConfirm.vue';
-    import SuccessModal from '../layout/SuccessModal.vue';
+    import Message from '../layout/Message.vue';
     import EditKey from './EditKey.vue';
 
     export default {
-        components: { DeleteConfirm, SuccessModal, EditKey },
+        components: { DeleteConfirm, Message, EditKey },
         data() {
             return {
                 key: {},
@@ -120,6 +120,7 @@
         },
         methods: {
             fetchData() {
+                this.isBusy = true;
                 this.axios
                     .get('/api/keys')
                     .then(response => {
@@ -141,6 +142,7 @@
                             console.log(response.error);
                         } else {
                             $('#successModal').modal('show');
+                            that.fetchData();
                         }
                     })
                     .catch(err => console.log(err))
