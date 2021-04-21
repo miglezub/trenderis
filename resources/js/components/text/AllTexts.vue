@@ -19,7 +19,7 @@
                         <label class="font-weight-bold">Raktažodis</label>
                         <input type="text" class="form-control" placeholder="Įveskite raktažodį" v-model="keyword">
                     </div>
-                    <div class="form-group">
+                    <div v-if="keys.length > 0" class="form-group">
                         <label for="key-select" class="font-weight-bold">API raktas</label>
                         <select class="custom-select" id="key-select" v-model="key">
                             <option value="" disabled>Pasirinkite API raktą</option>
@@ -74,6 +74,7 @@
         </div>
         <delete-confirm title="Teksto ištrynimas" message="Ar tikrai norite ištrinti tekstą?<br>Pašalinus tekstą bus ištrinti ir jo analizės rezultatai." :id="deleteId" v-on:approvedDeletion="deleteText"></delete-confirm>
         <message id="filterMessage" type="error" title="Filtravimo klaida" message="Prašome suvesti bent vieną filtro lauką!"></message>
+        <message id="errorMessage" type="error" title="Sistemos klaida" message="Atsiprašome, įvyko nenumatyta sistemos klaida."></message>
     </div>
 </template>
  
@@ -178,6 +179,9 @@
                         limit: this.perPage
                     }
                 })
+                .catch(function (error) {
+                    $('#errorMessage').modal('show');
+                })
                 .then(response => {
                     this.texts = response.data.results;
                     this.totalTexts = response.data.total;
@@ -186,13 +190,16 @@
             },
             triggerDelete(id) {
                 this.deleteId = id;
+                $('#deleteModal').modal('show');
             },
             deleteText(id) { 
                 this.axios
                     .delete(`/api/texts/${id}`)
+                    .catch(function (error) {
+                        $('#errorMessage').modal('show');
+                    })
                     .then(response => {
-                        let i = this.texts.map(data => data.id).indexOf(id);
-                        this.texts.splice(i, 1);
+                        this.filterList();
                         $('#deleteModal').modal('hide');
                         $('#textDeleted').modal('show');
                     });
@@ -239,6 +246,9 @@
                             page: this.currentPage,
                             limit: this.perPage
                         }
+                    })
+                    .catch(function (error) {
+                        $('#errorMessage').modal('show');
                     })
                     .then(response => {
                         this.texts = response.data.results;
