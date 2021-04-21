@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use \App\Models\ApiKey;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class GraphFilterController extends Controller
 {
@@ -20,12 +23,24 @@ class GraphFilterController extends Controller
     public function filter(Request $request) {
         $start = microtime(true);
         $user = $request->user();
+        if($request->path() == 'portal/filterGraph' && !empty($request->key)) {
+            $api_key = ApiKey::all()->where('key', '=', $request->key)->first();
+            $user = $api_key->user;
+            Auth::login($user);
+            $user = Auth::user();
+            $request->api_key = $request->key;
+        }
         if($user && isset($request-> type)) {
             switch ($request->type) {
                 case 1:
                     $minDate = $user->texts->last();
-                    if(!empty($request->date1) && $request->date1 > $minDate->created_at) {
-                        $request->date1 = $minDate->created_at;
+                    if($minDate == null) {
+                        $minDate = date("Y-m-d H:i:s");
+                    } else {
+                        $minDate = $minDate->created_at;
+                    }
+                    if(!empty($request->date1) && $request->date1 > $minDate) {
+                        $request->date1 = $minDate;
                     }
                     $response = $this->filterTendency($request);
                     $title = 'Populiariausi raktažodžiai ';
@@ -51,9 +66,36 @@ class GraphFilterController extends Controller
                 default:
                     $response = array();
             }
+            if($request->path() == 'portal/filterGraph') {
+                Auth::logout();
+            }
             $end = microtime(true);
-            return response()->json(array('results' => $response, 'time' => $end - $start, 'title' => $title));
+            switch ($request->type) {
+                case 1:
+                    return response()->json(array('total' => $response['total'], 'time' => $end - $start, 'title' => $title, 'results' => $response['results']));
+                break;
+                case 2:
+                    return response()->json(array('time' => $end - $start, 'title' => $title, 'results' => $response));
+                default:
+                    return; 
+            }
         } else {
+            if($request->path() == 'portal/filterGraph') {
+                $json = array();
+                if(empty($request-> type)) {
+                    $json['type'] = "Nenurodytas grafiko tipas";
+                }
+                if(empty($request-> api_key)) {
+                    $json['key'] = "Nurodytas blogas API raktas";
+                }
+                if($request->type != 2 && empty($request->date1) && empty($request->date2)) {
+                    $json['date'] = "Nenurodytos datos";
+                }
+                if($request->type == 2 && empty($request->keyword)) {
+                    $json['keyword'] = "Nenurodytas raktažodis";
+                }
+                return response()->json($json);
+            }
             return redirect('/login');
         }
     }
@@ -67,8 +109,8 @@ class GraphFilterController extends Controller
         if(!empty($request->date2) && $request->date2 != $request->date1) {
             $textsQuery->whereDate('created_at', '<=', $request->date2);
         }
-        if(!empty($request->key)) {
-            $textsQuery->where('api_key_id', '=', $request->key);
+        if(!empty($request->api_key)) {
+            $textsQuery->where('api_key_id', '=', $request->api_key);
         }
         $texts = $textsQuery->get()->toArray();
         return $this->getResults($texts);
@@ -86,9 +128,10 @@ class GraphFilterController extends Controller
         if(!empty($request->date2) && $request->date2 != $request->date1) {
             $textsQuery->whereDate('texts.created_at', '<=', $request->date2);
         }
-        if(!empty($request->key)) {
-            $textsQuery->where('api_key_id', '=', $request->key);
+        if(!empty($request->api_key)) {
+            $textsQuery->where('api_key_id', '=', $request->api_key);
         }
+        $keyword = "";
         if(!empty($request->keyword)) {
             $keyword = strip_tags($request->keyword);
             $keyword = mb_strtolower($keyword);
@@ -109,8 +152,8 @@ class GraphFilterController extends Controller
                 $results[$text->created_at]['total'] = 0;
             }
             $results[$text->created_at]['date'] = $text->created_at;
-            if(!empty($request->keyword)) {
-                $pos = strpos($text->results, $request->keyword);
+            if(!empty($keyword)) {
+                $pos = strpos($text->results, $keyword);
                 if($pos) {
                     $results[$text->created_at]['total']++;
                     $ending = strpos($text->results, "}", $pos) + 1;
@@ -170,8 +213,8 @@ class GraphFilterController extends Controller
             $results[$key]['w'] = $key;
             $res[] = $results[$key];
         }
-        usort($results, array(TextAnalysisController::class, "cmpFreqFirst"));
+        usort($results, array(TextAnalysisController::class, "cmp"));
         $results = array_splice($results, 0, 20, true);
-        return $results;
+        return array('results' => $results, 'total' => count($texts));
     }
 }

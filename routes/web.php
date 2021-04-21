@@ -40,6 +40,10 @@ Route::prefix('api')->middleware('auth')->group(function () {
     Route::resource('/keys', App\Http\Controllers\ApiKeyController::class);
 });
 
+Route::prefix('portal')->group(function () {
+    Route::get('/filterGraph', 'App\Http\Controllers\GraphFilterController@filter');
+});
+
 Route::get('{any}', function () {
     return view('layouts.vue');
 })->where('any', '.*');
