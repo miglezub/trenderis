@@ -81,8 +81,10 @@ class TextController extends Controller
                 $keyword = strip_tags($request->keyword);
                 $keyword = mb_strtolower($keyword);
                 $keyword = str_replace(array('.', ',', "\n", "\t", "\r", "!", "?", ":", ";", "(", ")", "[", "]", "\"", "“", "„", " – "), ' ', $keyword);
-                $textsQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
-                $textsTotalQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
+                $keyword = json_encode($keyword);
+                $keyword = str_replace("\"", '', $keyword);
+                $textsQuery->where('results', 'LIKE', "%" . $keyword . "%");
+                $textsTotalQuery->where('results', 'LIKE', "%" . $keyword . "%");
             }
             $texts = $textsQuery->orderBy('created_at', 'DESC')->groupBy('texts.id')->offset(($page-1) * $limit)->limit($limit)->get()->toArray();
             $total = count($textsTotalQuery->groupBy('texts.id')->get());
@@ -126,10 +128,10 @@ class TextController extends Controller
             $text = $user->texts()->find($id);
             $text['original_text'] = nl2br($text['original_text']);
             $analysis = $text->text_analysis->last();
+            $json['text'] = $text;
             if($analysis) {
                 $json['results'] = json_decode($analysis->results);
             }
-            $json['text'] = $text;
             return response()->json($json);
         } else {
             return redirect('/login');
@@ -243,7 +245,7 @@ class TextController extends Controller
     public function import()
     {
         $user = \App\Models\User::find(1);
-        set_time_limit(450);
+        set_time_limit(500);
         $ch = curl_init();
         $page = Cache::get('botis_page');
 
