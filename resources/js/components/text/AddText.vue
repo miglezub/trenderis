@@ -38,7 +38,7 @@
                     spinner-variant="primary"
                     class="d-inline-block"
                     >
-                    <button type="submit" class="btn btn-primary" :disabled="busy">Analizuoti</button>
+                    <button type="submit" class="btn btn-primary" :disabled="busy">Pridėti tekstą</button>
                     </b-overlay>
                 </div>
             </form>
