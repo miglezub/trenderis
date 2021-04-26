@@ -9,7 +9,13 @@ class TextAnalysisController extends Controller
 {
     static function cmp($a, $b)
     {
-        if (key_exists("tfidf", $a) && !empty($a['tfidf'])) {
+        if(!key_exists("tfidf", $a) || empty($a['tfidf'])) {
+            $a["tfidf"] = (key_exists("tf", $a)) ? $a["tf"] : 0;
+        }
+        if(!key_exists("tfidf", $b) || empty($b['tfidf'])) {
+            $b["tfidf"] = (key_exists("tf", $b)) ? $b["tf"] : 0;
+        }
+        if (key_exists("tfidf", $a) && !empty($a['tfidf']) && key_exists("tfidf", $b) && !empty($b['tfidf'])) {
             if($a['tfidf'] == $b['tfidf']) {
                 if ($a['freq'] == $b['freq']){
                     return (key($a) < key($b)) ? -1 : 1;
@@ -62,6 +68,9 @@ class TextAnalysisController extends Controller
         $lemmatizer = new Lemmatizer($text->language_id);
         $user = User::find($user_id);
         $total_documents = $user->texts()->count();
+        $index = 0;
+        $count = count($results) > 100 ? count($results) / 5 : count($results);
+        $count = $count > 100 ? 100 : $count;
         foreach($results as $key => $result) {
             if(!is_array($results[$key])) {
                 $results[$key] = array();
@@ -74,23 +83,28 @@ class TextAnalysisController extends Controller
             $results[$key]['lemma'] = $lemmatizer->lemmatize($key);
             $results[$key]['w'] = $key;
             if($text->use_idf) {
-                $search = '%' . $key . '%';
-                $search2 = '"' . $key . '"';
-                // $document_count = $user->texts()->whereRaw('lower(original_text) like (?)',["{$search}"])->count();
-                $document_count = 0;
-                foreach($user->texts()->whereRaw('lower(original_text) like (?)',["{$search}"])->get() as $document) {
-                    $tanalysis = $document->text_analysis->last();
-                    if($tanalysis && strpos($tanalysis->results, $search2)) {
-                        $document_count++;
+                if($index++ < $count) {
+                    $search = '%' . $key . '%';
+                    $search2 = '"' . $key . '"';
+                    $document_count = $user->texts()->where('language_id', '=', $text->language_id)->whereRaw('lower(original_text) like (?)',["{$search}"])->count();
+                    // $document_count = 0;
+                    // foreach($user->texts()->where('language_id', '=', $text->language_id)->whereRaw('lower(original_text) like (?)',["{$search}"])->get() as $document) {
+                    //     $tanalysis = $document->text_analysis->last();
+                    //     if($tanalysis && strpos($tanalysis->results, $search2)) {
+                    //         $document_count++;
+                    //     }
+                    // }
+                    // $document_count = $user->texts()->where('original_text', 'like', $search)->count();
+                    if($document_count > 0) {
+                        $results[$key]['idf'] = log($total_documents/$document_count, 10);
+                    } else {
+                        $results[$key]['idf'] = 1;
                     }
-                }
-                // $document_count = $user->texts()->where('original_text', 'like', $search)->count();
-                if($document_count > 0) {
-                    $results[$key]['idf'] = log($total_documents/$document_count, 10);
+                    $results[$key]['tfidf'] = $results[$key]['tf'] * $results[$key]['idf'];
                 } else {
                     $results[$key]['idf'] = 1;
+                    $results[$key]['tfidf'] = $results[$key]['tf'];
                 }
-                $results[$key]['tfidf'] = $results[$key]['tf'] * $results[$key]['idf'];
             }
             if(key_exists('lemma', $results[$key]) && $results[$key]['lemma'] && key_exists($results[$key]['lemma'], $results)) {
                 if(!is_array($results[$results[$key]['lemma']])) {
@@ -113,8 +127,7 @@ class TextAnalysisController extends Controller
             }
         }
         usort($results, array($this, "cmp"));
-        $top_results = array_splice($results, 0, 5, true);
         $end = microtime(true);
-        $analysis->update(['results' => json_encode($results, JSON_INVALID_UTF8_IGNORE), 'top_results' => $top_results, 'duration' => $end - $start]);
+        $analysis->update(['results' => json_encode($results, JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE ), 'top_results' => array_splice($results, 0, 5, true), 'duration' => $end - $start]);
     }
 }
