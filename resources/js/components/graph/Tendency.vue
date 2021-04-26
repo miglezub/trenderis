@@ -73,9 +73,9 @@
     mounted () {
         var date = new Date();
         date.setDate(date.getDate() - 1);
-        date.setHours(0);
-        date.setMinutes(59);
-        date.setSeconds(59);
+        date.setHours(1);
+        date.setMinutes(0);
+        date.setSeconds(0);
         var filter = {dates: [date, ""], type: 1};
         this.filterGraph(filter);
     },
@@ -95,13 +95,13 @@
                 date1 = "";
             } else {
                 date1 = new Date()
-                date1.setTime(filter.dates[0].getTime() + 3600 * 1000 * 26 - 1);
+                date1.setTime(filter.dates[0].getTime() + 3600 * 1000 * 3);
             }
             if(!filter.dates[1]) {
                 filter.dates[1] = "";
             } else {
                 date2 = new Date()
-                date2.setTime(filter.dates[1].getTime() + 3600 * 1000 * 26 - 1);
+                date2.setTime(filter.dates[1].getTime() + 3600 * 1000 * 27 - 1);
             }
             this.axios
                 .get('/api/filterGraph', {
