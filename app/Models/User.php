@@ -50,4 +50,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(ApiKey::class);
     }
+
+    public function graphFilters()
+    {
+        return $this->hasMany(GraphFilter::class);
+    }
 }
