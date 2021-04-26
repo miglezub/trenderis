@@ -23610,6 +23610,7 @@ svg {
     min-width: 80px;
     max-width: 80px;
     height: 66px;
+    display: none;
   }
 
   .wrapper #sidebar.shrink .sidebar-header h3,
@@ -23840,6 +23841,29 @@ svg {
   }
 }
 
+@media (max-width: 576px) {
+  .filter form {
+    flex-basis: 100%;
+  }
+
+  .filter form .form-group {
+    flex-basis: 100%;
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .filter form .form-group input,
+  .filter form .form-group select,
+  .filter form .form-group label {
+    flex-basis: 100%;
+    display: flex;
+  }
+
+  .filter form .mx-datepicker-range {
+    width: 100%;
+  }
+}
+
 .filter a.btn {
   height: -webkit-min-content;
   height: -moz-min-content;
@@ -23853,8 +23877,51 @@ svg {
 @media (max-width: 992px) {
   .filter a.btn {
     flex-basis: 20%;
+    width: -webkit-max-content;
+    width: -moz-max-content;
+    width: max-content;
     align-self: end;
     margin-bottom: 16px;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .filter a.btn {
+    flex-basis: 100%;
+    width: -webkit-max-content;
+    width: -moz-max-content;
+    width: max-content;
+  }
+}
+
+table {
+  display: inline-table !important;
+}
+
+@media (max-width: 768px) {
+  table {
+    display: block;
+  }
+}
+
+@media (max-width: 576px) {
+  table .hideMobile {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  table .btn-group {
+    flex-wrap: wrap;
+  }
+
+  table .btn-group .btn {
+    border-radius: 0.25rem !important;
+  }
+
+  table .btn-group .btn-primary {
+    margin-bottom: 10px;
   }
 }
 

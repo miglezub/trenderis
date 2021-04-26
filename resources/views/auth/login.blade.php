@@ -50,11 +50,11 @@
                     </a>
                 @endif
 
-                <a class="underline text-sm text-gray-600 hover:text-gray-900" href="{{ route('register') }}">
+                <a class="underline text-sm text-blue-700 hover:text-blue-900" href="{{ route('register') }}">
                     {{ __('auth.registration') }}
                 </a>
 
-                <x-button class="ml-3">
+                <x-button class="ml-3 btn btn-primary">
                     {{ __('auth.log_in') }}
                 </x-button>
             </div>

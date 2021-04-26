@@ -283,6 +283,7 @@ svg {
                 min-width: 80px;
                 max-width: 80px;
                 height: 66px;
+                display: none;
                 .sidebar-header {
                     h3, strong {
                         display: none;
@@ -492,6 +493,21 @@ svg {
                 width: min-content;
             }
           }
+          @include sm {
+            flex-basis: 100%;
+            .form-group {
+                flex-basis: 100%;
+                display: flex;
+                flex-wrap: wrap;
+                input, select, label {
+                    flex-basis: 100%;
+                    display: flex;
+                }
+            }
+            .mx-datepicker-range {
+                width: 100%;
+            }
+          }
       }
       a.btn {
           height: min-content;
@@ -499,8 +515,36 @@ svg {
           flex-basis: 16%;
           @include lg {
             flex-basis: 20%;
+            width: max-content;
             align-self: end;
             margin-bottom: 16px;
+            margin-left: auto;
+          }
+          @include sm {
+            flex-basis: 100%;
+            width: max-content;
           }
       }
+  }
+  table {
+    display: inline-table !important;
+    @include md {
+        display: block;
+    }
+    .hideMobile {
+        @include sm {
+            display: none;
+        }
+    }
+    .btn-group {
+        @include md {
+            flex-wrap: wrap;
+            .btn {
+                border-radius: 0.25rem !important;
+            }
+            .btn-primary {
+                margin-bottom: 10px;
+            }
+        }
+    }
   }
