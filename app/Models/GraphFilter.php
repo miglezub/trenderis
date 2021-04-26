@@ -11,7 +11,7 @@ class GraphFilter extends Model
     protected $fillable = [
         'date_from',
         'date_to',
-        'results',
+        'result',
         'user_id',
         'api_key_id'
     ];
