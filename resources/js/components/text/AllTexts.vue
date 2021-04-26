@@ -40,6 +40,7 @@
                 :per-page="0"
                 :current-page="currentPage"
                 :busy.sync="isBusy"
+                class="table-responsive"
                 >
                 <template #empty="scope">
                     <div class="text-center">Nėra pridėtų tekstų</div>
@@ -69,7 +70,8 @@
                 :per-page="perPage"
                 aria-controls="texts-table"
                 align="right"
-                v-if="totalTexts > 5"
+                v-if="totalTexts > 10"
+                limit="7"
                 ></b-pagination>
         </div>
         <delete-confirm title="Teksto ištrynimas" message="Ar tikrai norite ištrinti tekstą?<br>Pašalinus tekstą bus ištrinti ir jo analizės rezultatai." :id="deleteId" v-on:approvedDeletion="deleteText"></delete-confirm>
@@ -120,7 +122,9 @@
                                 return "";
                             }
                         },
-                        sortable: true
+                        sortable: true,
+                        tdClass: 'hideMobile',
+                        thClass: 'hideMobile'
                     },
                     {
                         key: 'created_at',
@@ -128,7 +132,9 @@
                         formatter: value => {
                             return value.split("T")[0];
                         },
-                        sortable: true
+                        sortable: true,
+                        tdClass: 'hideMobile',
+                        thClass: 'hideMobile'
                     },
                     {
                         key: 'buttons',
