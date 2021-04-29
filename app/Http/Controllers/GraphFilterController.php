@@ -23,28 +23,28 @@ class GraphFilterController extends Controller
     public function filter(Request $request) {
         $start = microtime(true);
         $user = $request->user();
-        if($request->path() == 'portal/filterGraph' && !empty($request->key)) {
-            $api_key = ApiKey::all()->where('key', '=', $request->key)->first();
-            $user = $api_key->user;
-            Auth::login($user);
-            $user = Auth::user();
-            $request->api_key = $request->key;
-        }
         if($user && isset($request->type)) {
             switch ($request->type) {
                 case 1:
-                    $minDate = $user->texts->last();
-                    if($minDate == null) {
-                        $minDate = date("Y-m-d H:i:s");
-                    } else {
-                        $minDate = $minDate->created_at;
+                    if($request->initial == 1) {
+                        $minDate = $user->texts->last();
+                        if($minDate == null) {
+                            $minDate = date("Y-m-d H:i:s");
+                        } else {
+                            $minDate = $minDate->created_at;
+                        }
+                        if(!empty($request->date1) && $request->date1 > $minDate) {
+                            $request->date1 = $minDate;
+                        }
                     }
-                    if(!empty($request->date1) && $request->date1 > $minDate) {
-                        $request->date1 = $minDate;
+                    if(empty($request->date2)) {
+                        $request->date2 = $request->date1;
                     }
+                    $search_date1 = strpos($request->date1, "T") ? substr($request->date1, 0, strpos($request->date1, "T")) : $request->date1;
+                    $search_date2 = strpos($request->date2, "T") ? substr($request->date2, 0, strpos($request->date2, "T")) : $request->date2;
                     $search = $user->graphFilters()
-                        ->where('date_from', '=', substr($request->date1, 0, strpos($request->date1, "T")))
-                        ->where('date_to', '=', $request->date2 ? substr($request->date2, 0, strpos($request->date2, "T")) : substr($request->date1, 0, strpos($request->date1, "T")))
+                        ->where('date_from', '=', $search_date1)
+                        ->where('date_to', '=', $search_date2)
                         ->where('api_key_id', '=', $request->api_key)
                         ->orderBy('created_at', 'DESC')
                         ->get();
@@ -78,13 +78,7 @@ class GraphFilterController extends Controller
                 default:
                     $response = array();
             }
-            if($request->path() == 'portal/filterGraph') {
-                Auth::logout();
-            }
             $end = microtime(true);
-            if(empty($request->date2)) {
-                $request->date2 = $request->date1;
-            }
             switch ($request->type) {
                 case 1:
                     $res = array('total' => $response['total'], 'time' => $end - $start, 'title' => $title, 'results' => $response['results']);
@@ -103,22 +97,6 @@ class GraphFilterController extends Controller
                     return; 
             }
         } else {
-            if($request->path() == 'portal/filterGraph') {
-                $json = array();
-                if(empty($request-> type)) {
-                    $json['type'] = "Nenurodytas grafiko tipas";
-                }
-                if(empty($request-> api_key)) {
-                    $json['key'] = "Nurodytas blogas API raktas";
-                }
-                if($request->type != 2 && empty($request->date1) && empty($request->date2)) {
-                    $json['date'] = "Nenurodytos datos";
-                }
-                if($request->type == 2 && empty($request->keyword)) {
-                    $json['keyword'] = "Nenurodytas raktažodis";
-                }
-                return response()->json($json);
-            }
             return redirect('/login');
         }
     }
