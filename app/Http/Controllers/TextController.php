@@ -126,11 +126,22 @@ class TextController extends Controller
         if($user) {
             $json = array();
             $text = $user->texts()->find($id);
-            $text['original_text'] = nl2br($text['original_text']);
-            $analysis = $text->text_analysis->last();
-            $json['text'] = $text;
-            if($analysis) {
-                $json['results'] = json_decode($analysis->results);
+            if($text) {
+                $text['original_text'] = nl2br($text['original_text']);
+                $analysis = $text->text_analysis->last();
+                unset($text->text_analysis);
+                $json['text'] = $text;
+                if($analysis) {
+                    $json['results'] = json_decode($analysis->results);
+                }
+                if($request->showStatus) {
+                    $json['status'] = 200;
+                }
+            } else {
+                $json['error']['text'] = "Tekstas nerastas";
+                if($request->showStatus) {
+                    $json['status'] = 400;
+                }
             }
             return response()->json($json);
         } else {
@@ -158,6 +169,10 @@ class TextController extends Controller
             foreach($text->text_analysis as $analysis) {
                 $analysis->delete();
             }
+            $user->graphFilters()
+                ->where('date_from', '<=', $text['created_at']->format('Y-m-d'))
+                ->where('date_to', '>=', $text['created_at']->format('Y-m-d'))
+                ->delete();
             $text->delete();
             return response()->json(['success' => 'Tekstas ištrintas']);
         } else {
@@ -185,6 +200,10 @@ class TextController extends Controller
             ]);
     
             if($newText) {
+                $request->user()->graphFilters()
+                        ->where('date_from', '<=', date('Y-m-d H:i:s'))
+                        ->where('date_to', '>=', date('Y-m-d H:i:s'))
+                        ->delete();
                 $analysis = $newText->text_analysis()->create([
                     'lemmatized_text' => '',
                     'results' => '',
@@ -244,10 +263,11 @@ class TextController extends Controller
 
     public function import()
     {
+        // Cache::put('botis_page', 30);
         $user = \App\Models\User::find(1);
         set_time_limit(500);
         $ch = curl_init();
-        $page = Cache::get('botis_page');
+        $page = Cache::get('botis_page');var_dump($page);
 
         curl_setopt($ch, CURLOPT_URL, config('constants.botis_url') . "&page=" . $page);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -267,6 +287,10 @@ class TextController extends Controller
                 ]);
         
                 if($newText) {
+                    $user->graphFilters()
+                        ->where('date_from', '<=', substr($text['created_at'], 0, strpos($text['created_at'], "T")))
+                        ->where('date_to', '>=', substr($text['created_at'], 0, strpos($text['created_at'], "T")))
+                        ->delete();
                     $analysis = $newText->text_analysis()->create([
                         'lemmatized_text' => '',
                         'results' => '',
@@ -281,6 +305,7 @@ class TextController extends Controller
 
         if($page > 1) {
             Cache::put('botis_page', $page - 1);
+            // return redirect()->route('import');
         }
     }
 
