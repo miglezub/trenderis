@@ -72,11 +72,11 @@
     },
     mounted () {
         var date = new Date();
-        date.setDate(date.getDate() - 1);
-        date.setHours(1);
+        date.setDate(date.getDate());
+        date.setHours(0);
         date.setMinutes(0);
         date.setSeconds(0);
-        var filter = {dates: [date, ""], type: 1};
+        var filter = {dates: [date, ""], type: 1, initial: 1};
         this.filterGraph(filter);
     },
     methods: {
@@ -110,7 +110,8 @@
                         date1: date1,
                         date2: date2,
                         api_key: filter.key,
-                        keyword: filter.keyword
+                        keyword: filter.keyword,
+                        initial: filter.initial
                     }
                 })
                 .then(response => {

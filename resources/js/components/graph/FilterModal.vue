@@ -78,6 +78,7 @@ export default {
                 dates: [],
                 key: "",
                 keyword: "",
+                initial: 0
             },
             keys: {},
             types: {
