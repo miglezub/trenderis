@@ -32,7 +32,7 @@ Route::prefix('api')->middleware('auth')->group(function () {
     Route::post('/analyse/{id}', 'App\Http\Controllers\TextController@analyse');
     Route::get('/lemmatize/{word}', 'App\Http\Controllers\TextController@lemmatize');
     Route::get('/wordEndings', 'App\Http\Controllers\TextController@wordEndings');
-    Route::get('/import', 'App\Http\Controllers\TextController@import');
+    Route::get('/import', 'App\Http\Controllers\TextController@import')->name('import');;
     Route::get('/dayResults', 'App\Http\Controllers\GraphFilterController@dayResults');
     Route::get('/filterGraph', 'App\Http\Controllers\GraphFilterController@filter');
     Route::get('/recalculate', 'App\Http\Controllers\TextController@recalculate');
@@ -41,7 +41,9 @@ Route::prefix('api')->middleware('auth')->group(function () {
 });
 
 Route::prefix('portal')->group(function () {
-    Route::get('/filterGraph', 'App\Http\Controllers\GraphFilterController@filter');
+    Route::get('/graph', 'App\Http\Controllers\ApiRequestController@graph');
+    Route::post('/text', 'App\Http\Controllers\ApiRequestController@addTexts');
+    Route::get('/text/{text_id}', 'App\Http\Controllers\ApiRequestController@text');
 });
 
 Route::get('{any}', function () {
