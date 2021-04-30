@@ -119,7 +119,7 @@
                     if(filter.type == 1) {
                         response.data.results.forEach(function(result) {
                             that.labels.push(result.w);
-                            that.freq.push(result.freq);
+                            that.freq.push(parseFloat(result.tf).toFixed(4));
                             if(result.tfidf) {
                                 that.tfidf.push(parseFloat(result.tfidf).toFixed(4));
                             } else {
@@ -146,7 +146,7 @@
                             datasets: [
                             {
                                 type: 'bar',
-                                label: 'Dažnis',
+                                label: 'TF',
                                 yAxisID: 'freq',
                                 data: that.freq,
                                 backgroundColor: "#F26D3D98"
@@ -167,7 +167,7 @@
                             datasets: [
                             {
                                 type: 'line',
-                                label: 'Dažnis',
+                                label: 'TF',
                                 yAxisID: 'freq',
                                 data: that.freq,
                                 backgroundColor: "#F26D3D98"
