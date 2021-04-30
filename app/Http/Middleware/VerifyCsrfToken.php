@@ -12,6 +12,7 @@ class VerifyCsrfToken extends Middleware
      * @var array
      */
     protected $except = [
-        "/portal/text"
+        "/portal/text",
+        "/portal/callback"
     ];
 }

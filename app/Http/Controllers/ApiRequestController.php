@@ -205,4 +205,11 @@ class ApiRequestController extends Controller
             return response()->json($json);
         }
     }
+    public function callback(Request $request) {
+        $json = json_encode($request->all(), JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE);
+        Log::debug($json);
+        $fp = fopen('C:\xampp\htdocs\trenderis\storage\app\callback_response.json', 'w');
+        fwrite($fp, $json);
+        fclose($fp);
+    }
 }

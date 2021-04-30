@@ -43,6 +43,7 @@ Route::prefix('api')->middleware('auth')->group(function () {
 Route::prefix('portal')->group(function () {
     Route::get('/graph', 'App\Http\Controllers\ApiRequestController@graph');
     Route::post('/text', 'App\Http\Controllers\ApiRequestController@addTexts');
+    Route::post('/callback', 'App\Http\Controllers\ApiRequestController@callback');
     Route::get('/text/{text_id}', 'App\Http\Controllers\ApiRequestController@text');
 });
 
