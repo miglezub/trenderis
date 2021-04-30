@@ -17,7 +17,8 @@ class Text extends Model
         'created_at',
         'title',
         'external_id',
-        'api_key_id'
+        'api_key_id',
+        'api_request_id'
     ]; 
 
     public function language()
@@ -28,5 +29,10 @@ class Text extends Model
     public function text_analysis()
     {
         return $this->hasMany(TextAnalysis::class);
+    }
+
+    public function api_request()
+    {
+        return $this->belongsTo(ApiRequest::class, 'api_request_id');
     }
 }
