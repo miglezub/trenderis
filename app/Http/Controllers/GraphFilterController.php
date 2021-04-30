@@ -40,8 +40,20 @@ class GraphFilterController extends Controller
                     if(empty($request->date2)) {
                         $request->date2 = $request->date1;
                     }
-                    $search_date1 = strpos($request->date1, "T") ? substr($request->date1, 0, strpos($request->date1, "T")) : $request->date1;
-                    $search_date2 = strpos($request->date2, "T") ? substr($request->date2, 0, strpos($request->date2, "T")) : $request->date2;
+                    if(is_string($request->date1) && strpos($request->date1, "T")) {
+                        $search_date1 = substr($request->date1, 0, strpos($request->date1, "T"));
+                    } else if(!is_string($request->date1)) {
+                        $search_date1 = $request->date1->format("Y-m-d");
+                    } else {
+                        $search_date1 = "";
+                    }
+                    if(is_string($request->date2) && strpos($request->date2, "T")) {
+                        $search_date2 = substr($request->date2, 0, strpos($request->date2, "T"));
+                    } else if(!is_string($request->date2)) {
+                        $search_date2 = $request->date2->format("Y-m-d");
+                    } else {
+                        $search_date2 = "";
+                    }
                     $search = $user->graphFilters()
                         ->where('date_from', '=', $search_date1)
                         ->where('date_to', '=', $search_date2)
@@ -186,9 +198,10 @@ class GraphFilterController extends Controller
             $analysis = \App\Models\TextAnalysis::where('text_id', '=', $text['id'])->orderBy('updated_at')->take(1)->get()->last();
             if($analysis && $analysis->results) {
                 foreach(json_decode($analysis->results) as $a) {
-                    if(!is_bool($a)) {
+                    if(!is_bool($a) && isset($a->w)) {
                         if(!key_exists($a->w, $results)) {
                             $results[$a->w] = array();
+                            $results[$a->w]['w'] = $a->w;
                             $results[$a->w]['freq'] = $a->freq;
                             $results[$a->w]['tf'] = $a->tf;
                             if(isset($a->tfidf)) {
@@ -214,11 +227,11 @@ class GraphFilterController extends Controller
                 }
             }
         }
-        $res = array();
-        foreach($results as $key => $result) {
-            $results[$key]['w'] = $key;
-            $res[] = $results[$key];
-        }
+        // $res = array();
+        // foreach($results as $key => $result) {
+        //     $results[$key]['w'] = $key;
+        //     $res[] = $results[$key];
+        // }
         usort($results, array(TextAnalysisController::class, "cmp"));
         $results = array_splice($results, 0, 20, true);
         return array('results' => $results, 'total' => count($texts));
