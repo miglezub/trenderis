@@ -17,18 +17,18 @@ class TextAnalysisController extends Controller
         }
         if (key_exists("tfidf", $a) && !empty($a['tfidf']) && key_exists("tfidf", $b) && !empty($b['tfidf'])) {
             if($a['tfidf'] == $b['tfidf']) {
-                if ($a['freq'] == $b['freq']){
+                if ($a['tf'] == $b['tf']){
                     return (key($a) < key($b)) ? -1 : 1;
                 }
-                return ($a['freq'] < $b['freq']) ? 1 : -1;
+                return ($a['tf'] < $b['tf']) ? 1 : -1;
             } else {
                 return (($a["tfidf"]-$b["tfidf"]) < 0) ? 1 : -1;
             }
-        } else if (key_exists("freq", $a) && !empty($a['freq'])) {
-            if ($a['freq'] == $b['freq']){
+        } else if (key_exists("tf", $a) && !empty($a['tf'])) {
+            if ($a['tf'] == $b['tf']){
                 return 0;
             }
-            return ($a['freq'] < $b['freq']) ? 1 : -1;
+            return ($a['tf'] < $b['tf']) ? 1 : -1;
         } else {
             return 0;
         }
@@ -74,14 +74,15 @@ class TextAnalysisController extends Controller
         foreach($results as $key => $result) {
             if(!is_array($results[$key])) {
                 $results[$key] = array();
+                $results[$key]['w'] = $key;
                 $results[$key]['freq'] = $result;
                 $results[$key]['tf'] = $result/$total;
             } else {
+                $results[$key]['w'] = $key;
                 $results[$key]['freq'] += $result;
                 $results[$key]['tf'] += $result/$total;
             }
             $results[$key]['lemma'] = $lemmatizer->lemmatize($key);
-            $results[$key]['w'] = $key;
             if($text->use_idf) {
                 if($index++ < $count) {
                     $search = '%' . $key . '%';
@@ -128,6 +129,10 @@ class TextAnalysisController extends Controller
         }
         usort($results, array($this, "cmp"));
         $end = microtime(true);
-        $analysis->update(['results' => json_encode($results, JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE ), 'top_results' => array_splice($results, 0, 5, true), 'duration' => $end - $start]);
+        $analysis->update([
+            'results' => json_encode($results, JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE ), 
+            'top_results' => count($results) > 5 ? array_slice($results, 0, 5, true) : $results, 
+            'duration' => $end - $start]);
+        return $results;
     }
 }

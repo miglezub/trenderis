@@ -7,6 +7,10 @@ use \App\Models\ApiKey;
 use \App\Models\Language;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use \App\Events\AsyncAnalysis;
+use App\Models\ApiRequest;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class ApiRequestController extends Controller
 {
@@ -42,14 +46,15 @@ class ApiRequestController extends Controller
             $this->logout();
             return response()->json(array('error' => ['key' => $msg], 'status' => 400));
         }
-        if($request->text_id) {
+        if(isset($request->text_id)) {
+            $request->limit = isset($request->limit) && is_numeric($request->limit) ? $request->limit : 20;
             $user = Auth::user();
             $request->setUserResolver(function () use ($user) {
                 return $user;
             });
             $request->showStatus = true;
             $this->logout();
-            return app('App\Http\Controllers\TextController')->show($request->text_id, $request);
+            return app('App\Http\Controllers\TextController')->show($request->text_id, $request, true);
         } else {
             $this->logout();
             return response()->json(array('error' => ['text_id' => 'Nenurodytas teksto id'], 'status' => 400));
@@ -103,7 +108,8 @@ class ApiRequestController extends Controller
             $json['error']['texts'] = "Nenurodyti tekstai";
             $error = true;
         }
-        if(count($request->texts) > 10 && !isset($request->keyword)) {
+        if(count($request->texts) >= 10 && !isset($request->callback)) {
+            //validatint ar geras urlas
             $json['error']['callback'] = "Nenurodyta callback nuoroda";
             $error = true;
         }
@@ -112,7 +118,6 @@ class ApiRequestController extends Controller
             $error = true;
         }
         if(isset($request->language) && !Language::find($request->language)) {
-            //tikrint ar gera kalba
             $json['error']['language'] = "Nurodytas blogas kalbos id (1 lt, 2 en)";
             $error = true;
         }
@@ -137,67 +142,25 @@ class ApiRequestController extends Controller
                 return $user;
             });
             if(count($request->texts) < 10) {
-                DB::beginTransaction();
-                $error_ids = array();
-                $successful_ids = array();
-                foreach($request->texts as $text) {
-                    if(isset($text['id'])) {
-                        if(isset($text['description'])) {
-                            $newText = $user->texts()->create([
-                                'title' => key_exists('title', $text) ? html_entity_decode($text['title']) : "",
-                                'original_text' => html_entity_decode($text['description']),
-                                'language_id' => $request->language,
-                                'use_idf' => $type == "tfidf" ? true : false,
-                                'use_word2vec' => $word2vec,
-                                'external_id' => $text['id'],
-                                'api_key_id' => $request->api_key,
-                                'created_at' => key_exists('created_at', $text) ? $text['created_at'] : date('Y-m-d H:i:s')
-                            ]);
-                            if($newText) {
-                                $created_at = key_exists('created_at', $text) ? substr($text['created_at'], 0, strpos($text['created_at'], "T")) : date('Y-m-d');
-                                $user->graphFilters()
-                                        ->where('date_from', '<=', $created_at)
-                                        ->where('date_to', '>=', $created_at)
-                                        ->delete();
-                                $analysis = $newText->text_analysis()->create([
-                                    'lemmatized_text' => '',
-                                    'results' => '',
-                                    'use_idf' => $type == "tfidf" ? true : false,
-                                    'use_word2vec' => $word2vec
-                                ]);
-                                $analysisController = new TextAnalysisController();
-                                $analysisController->analyse($analysis->id, auth()->user()->id);
-                                $successful_ids[] = $text['id'];
-                            } else {
-                                $error_ids[] = $text['id'];
-                            }
-                        } else {
-                            $error_ids[] = $text['id'];
-                        }
-                    } else {
-                        $json['error']['texts'] = "Privaloma nurodyti kiekvieno teksto id.";
-                        $error = true;
-                        $json['status'] = 400;
-                        DB::rollBack();
-                        $this->logout();
-                        return response()->json($json);
-                    }
-                }
-                DB::commit();
-                if(count($error_ids) > 0) {
-                    $json['error_ids'] = $error_ids;
-                    $json['status'] = 400;
-                }
-                if(count($successful_ids) > 0) {
-                    $json['success_ids'] = $successful_ids;
-                    $json['status'] = 200;
-                }
+                $json = $this->addAndAnalyse($request, $type, $word2vec);
                 return response()->json($json);
             } else {
-                $json['status'] = 202;
-                $this->logout();
-                $json['msg'] = "Uzklausa apdorojama asinchroniskai. Analizes rezultatai bus grazinti i nurodyta callback nuoroda.";
-                return response()->json($json);
+                //sukuriamas naujas api requestas, kiekvienas tekstas pridedamas i db
+                //tekstams priskiriamas api request id, kai api requestas ivykdomas id padaromas null
+                $api_request = $request->user()->apiRequests()->create([
+                    'callback' => $request->callback,
+                    ]);
+                if($api_request) {
+                    $json = $this->addToDB($request, $type, $word2vec, $api_request->id);
+                    if($json['status'] == 200) {
+                        event(new AsyncAnalysis($api_request));
+                    }
+                    return response()->json($json);
+                } else {
+                    $json['status'] = 400;
+                    $json['msg'] = "Ivyko sistemos klaida";
+                    return response()->json($json);
+                }
             }
         } else {
             $json['status'] = 400;
@@ -205,6 +168,158 @@ class ApiRequestController extends Controller
             return response()->json($json);
         }
     }
+
+    private function add($text, $user, $language, $type, $word2vec, $api_key, $analyse = true, $api_request_id = null) {
+        $newText = $user->texts()->create([
+            'title' => key_exists('title', $text) ? html_entity_decode($text['title']) : "",
+            'original_text' => html_entity_decode($text['description']),
+            'language_id' => $language,
+            'use_idf' => $type == "tfidf" ? true : false,
+            'use_word2vec' => $word2vec,
+            'external_id' => $text['id'],
+            'api_key_id' => $api_key,
+            'created_at' => key_exists('created_at', $text) ? $text['created_at'] : date('Y-m-d H:i:s'),
+            'api_request_id' => $api_request_id
+        ]);
+        $created_at = key_exists('created_at', $text) ? substr($text['created_at'], 0, strpos($text['created_at'], "T")) : date('Y-m-d');
+        $user->graphFilters()
+                ->where('date_from', '<=', $created_at)
+                ->where('date_to', '>=', $created_at)
+                ->delete();
+        if($analyse && $newText) {
+            $analysis = $newText->text_analysis()->create([
+                'lemmatized_text' => '',
+                'results' => '',
+                'use_idf' => $type == "tfidf" ? true : false,
+                'use_word2vec' => $word2vec
+            ]);
+            $analysisController = new TextAnalysisController();
+            $results = $analysisController->analyse($analysis->id, auth()->user()->id);
+            return $results;
+        } else if(!$analyse && $newText) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function getResults($analysis) {
+        $results = array();
+        foreach($analysis as $a) {
+            foreach($a as $word) {
+                if(!is_bool($word) && key_exists("w", $word)) {
+                    if(!key_exists($word['w'], $results)) {
+                        $results[$word['w']] = array();
+                        $results[$word['w']]['w'] = $word['w'];
+                        $results[$word['w']]['freq'] = $word['freq'];
+                        $results[$word['w']]['tf'] = $word['tf'];
+                        if(isset($word['tfidf'])) {
+                            if(key_exists('tfidf', $results[$word['w']])) {
+                                $results[$word['w']]['tfidf'] += $word['tfidf'];
+                            } else {
+                                $results[$word['w']]['tfidf'] = $word['tfidf'];
+                            }
+                        }
+                    } else {
+                        $results[$word['w']]['freq'] += $word['freq'];
+                        $results[$word['w']]['tf'] += $word['tf'];
+                        if(!key_exists('tfidf', $results[$word['w']])) {
+                            $results[$word['w']]['tfidf'] = 0;
+                        }
+                        if(isset($a->tfidf)) {
+                            $results[$word['w']]['tfidf'] += $word['tfidf'];
+                        } else {
+                            $results[$word['w']]['tfidf'] += $word['tf'];
+                        }
+                    }
+                }
+            }
+        }
+        usort($results, array(TextAnalysisController::class, "cmp"));
+        $results = count($results) > 20 ? array_slice($results, 0, 20, true) : $results;
+        return $results;
+    }
+
+    private function addAndAnalyse(Request $request, $type, $word2vec)
+    {
+        $analysis = array();
+        $texts = array();
+        DB::beginTransaction();
+        $error_ids = array();
+        $successful_ids = array();
+        foreach($request->texts as $text) {
+            if(isset($text['id'])) {
+                //teksta prideda tik tada jei turi descriptiona ir external id unikalu
+                if(isset($text['description']) 
+                    && !$request->user()->texts()->where('external_id', '=', $text['id'])->exists()) {
+                        $a = $this->add($text, $request->user(), $request->language, $type, $word2vec, $request->api_key);
+                        if($a != false) {
+                            $analysis[] = $a;
+                            $texts[$text['id']] = count($a) > 10 ? array_slice($a, 0, 10, true) : $a;
+                            $successful_ids[] = $text['id'];
+                        }
+                } else {
+                    $error_ids[] = $text['id'];
+                }
+            } else {
+                $json['error']['texts'] = "Privaloma nurodyti kiekvieno teksto id.";
+                $json['status'] = 400;
+                DB::rollBack();
+                $this->logout();
+                return response()->json($json);
+            }
+        }
+        DB::commit();
+        if(count($error_ids) > 0) {
+            $json['status'] = 400;
+            $json['msg'] = "Tekstai neprideti. Nurodyti id kartojasi arba ivyko serverio klaida.";
+            $json['error_ids'] = $error_ids;
+        }
+        if(count($successful_ids) > 0) {
+            $json['texts'] = $texts;
+            $json['results'] = $this->getResults($analysis);
+            $json['status'] = 200;
+            $json['msg'] = "Tekstai prideti.";
+            $json['success_ids'] = $successful_ids;
+        }
+        return $json;
+    }
+
+    private function addToDB(Request $request, $type, $word2vec, $api_request_id) {
+        DB::beginTransaction();
+        $error_ids = array();
+        $successful_ids = array();
+        foreach($request->texts as $text) {
+            if(isset($text['id'])) {
+                if(isset($text['description']) 
+                    && !$request->user()->texts()->where('external_id', '=', $text['id'])->exists()
+                    && $this->add($text, $request->user(), $request->language, $type, $word2vec, $request->api_key, false, $api_request_id)) {
+                            $successful_ids[] = $text['id'];
+                } else {
+                    $error_ids[] = $text['id'];
+                }
+            } else {
+                $json['error']['texts'] = "Privaloma nurodyti kiekvieno teksto id.";
+                $json['status'] = 400;
+                DB::rollBack();
+                $this->logout();
+                return response()->json($json);
+            }
+        }
+        DB::commit();
+        if(count($error_ids) > 0) {
+            $json['status'] = 400;
+            $json['msg'] = "Tekstai neprideti. Nurodyti id kartojasi arba ivyko serverio klaida.";
+            $json['error_ids'] = $error_ids;
+        }
+        if(count($successful_ids) > 0) {
+            $json['status'] = 200;
+            $json['msg'] = "Tekstai prideti ir bus apdorojami asinchroniskai. Analizes rezultatai bus grazinti i nurodyta callback nuoroda.";
+            $json['success_ids'] = $successful_ids;
+        }
+        return $json;
+    }
+
     public function callback(Request $request) {
         $json = json_encode($request->all(), JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE);
         Log::debug($json);
