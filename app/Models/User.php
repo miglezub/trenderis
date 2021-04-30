@@ -55,4 +55,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(GraphFilter::class);
     }
+
+    public function apiRequests()
+    {
+        return $this->hasMany(ApiRequest::class);
+    }
 }
