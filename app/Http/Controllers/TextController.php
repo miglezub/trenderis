@@ -101,7 +101,9 @@ class TextController extends Controller
                 if($analysis) {
                     if($analysis->top_results) {
                         foreach(json_decode($analysis->top_results) as $result) {
-                            $texts[$key]->top_results[] = $result->w;
+                            if(isset($result->w)) {
+                                $texts[$key]->top_results[] = $result->w;
+                            }
                         }
                     } else {
                         $res = json_decode($analysis->results);
@@ -121,18 +123,27 @@ class TextController extends Controller
         }
     }
 
-    public function show($id, Request $request) {
+    public function show($id, Request $request, $external = false) {
         $user = $request->user();
         if($user) {
             $json = array();
-            $text = $user->texts()->find($id);
+            $text = $external ? $user->texts()->where('external_id', '=', $id)->first() : $user->texts()->find($id);
             if($text) {
                 $text['original_text'] = nl2br($text['original_text']);
                 $analysis = $text->text_analysis->last();
                 unset($text->text_analysis);
                 $json['text'] = $text;
                 if($analysis) {
-                    $json['results'] = json_decode($analysis->results);
+                    if($request->limit) {
+                        $results = json_decode($analysis->results);
+                        if($request->limit < count($results)) {
+                            $json['results'] = array_splice($results, 0, $request->limit , true);
+                        } else {
+                            $json['results'] = $results;
+                        }
+                    } else {
+                        $json['results'] = json_decode($analysis->results);
+                    }
                 }
                 if($request->showStatus) {
                     $json['status'] = 200;
@@ -312,13 +323,13 @@ class TextController extends Controller
     public function recalculate()
     {
         set_time_limit(150);
-        $texts = \App\Models\Text::all();
-        $limit = 10;
+        $texts = \App\Models\Text::all()->orderBy('created_at', 'DESC');
+        $limit = 30;
         foreach($texts as $text) {
             if($limit < 1) {
                 return;
             }
-            if(!$text->text_analysis->last() || $text->text_analysis->last()->updated_at < date("Y-m-d H:i:s", strtotime("-1 hours"))) {
+            // if(!$text->text_analysis->last() || $text->text_analysis->last()->updated_at < date("Y-m-d H:i:s", strtotime("-1 hours"))) {
                 $analysis = $text->text_analysis()->create([
                     'lemmatized_text' => '',
                     'results' => '',
@@ -328,7 +339,7 @@ class TextController extends Controller
                 $analysisController = new TextAnalysisController();
                 $analysisController->analyse($analysis->id, $text->user_id);
                 $limit--;
-            }
+            // }
         }
     }
 }
