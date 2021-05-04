@@ -33,7 +33,7 @@
                         <div v-if="submitted && (!$v.filter.dates.required)" class="invalid-feedback">Privaloma nurodyti datas arba API raktą</div>
                     </div>
                     <div class="form-group">
-                        <label for="key-select" class="font-weight-bold">API raktas (neprivalomas)</label>
+                        <label for="key-select" class="font-weight-bold">API raktas</label>
                         <select class="custom-select" id="key-select" v-model="filter.key" v-bind:class="{ 'is-invalid': submitted && !$v.filter.key.required }">
                             <option value="" disabled>Pasirinkite API raktą</option>
                             <option :value="key.id" v-for="key in keys" :key="key.id">{{ key.name }}</option>
@@ -102,7 +102,7 @@ export default {
                 },
                 dates: {
                     required: requiredIf(function (filter) {
-                        return filter.type == 1 && (filter.key == "" || filter.dates[0] == null);
+                        return filter.type == 1 && (filter.key == "");
                     })
                 },
                 key: {
