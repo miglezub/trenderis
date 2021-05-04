@@ -206,7 +206,7 @@ class ApiRequestController extends Controller
     public function getResults($analysis) {
         $results = array();
         foreach($analysis as $a) {
-            foreach($a as $word) {
+            foreach($a['results'] as $word) {
                 if(!is_bool($word) && key_exists("w", $word)) {
                     if(!key_exists($word['w'], $results)) {
                         $results[$word['w']] = array();
@@ -232,12 +232,17 @@ class ApiRequestController extends Controller
                             $results[$word['w']]['tfidf'] += $word['tf'];
                         }
                     }
+                    if(!key_exists('texts', $results[$word['w']])) {
+                        $results[$word['w']]['texts'] = array();
+                    }
+                    $results[$word['w']]['texts'][] = $a['text_id'];
                 }
             }
         }
         usort($results, array(TextAnalysisController::class, "cmp"));
+        $count = count($analysis);
         $results = count($results) > 20 ? array_slice($results, 0, 20, true) : $results;
-        return $results;
+        return array('results' => $results, 'total' => $count);
     }
 
     private function addAndAnalyse(Request $request, $type, $word2vec)
@@ -277,7 +282,9 @@ class ApiRequestController extends Controller
         }
         if(count($successful_ids) > 0) {
             $json['texts'] = $texts;
-            $json['results'] = $this->getResults($analysis);
+            $results = $this->getResults($analysis);
+            $json['results'] = $results['results'];
+            $json['total'] = $results['total'];
             $json['status'] = 200;
             $json['msg'] = "Tekstai prideti.";
             $json['success_ids'] = $successful_ids;
