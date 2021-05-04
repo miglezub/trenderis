@@ -40,19 +40,19 @@ class GraphFilterController extends Controller
                     if(empty($request->date2)) {
                         $request->date2 = $request->date1;
                     }
-                    if(is_string($request->date1) && strpos($request->date1, "T")) {
-                        $search_date1 = substr($request->date1, 0, strpos($request->date1, "T"));
-                    } else if(!is_string($request->date1)) {
-                        $search_date1 = $request->date1->format("Y-m-d");
+                    if(!empty($request->date1) && is_string($request->date1) && strpos($request->date1, "T")) {
+                        $search_date1 = $request->date1 = substr($request->date1, 0, strpos($request->date1, "T"));
+                    } else if(!empty($request->date1) && !is_string($request->date1)) {
+                        $search_date1 = $request->date1 = $request->date1->format("Y-m-d");
                     } else {
-                        $search_date1 = "";
+                        $search_date1 = $request->date1 = $user->texts->min('created_at');
                     }
-                    if(is_string($request->date2) && strpos($request->date2, "T")) {
-                        $search_date2 = substr($request->date2, 0, strpos($request->date2, "T"));
-                    } else if(!is_string($request->date2)) {
-                        $search_date2 = $request->date2->format("Y-m-d");
+                    if(!empty($request->date2) && is_string($request->date2) && strpos($request->date2, "T")) {
+                        $search_date2 = $request->date2 = substr($request->date2, 0, strpos($request->date2, "T"));
+                    } else if(!empty($request->date2) && !is_string($request->date2)) {
+                        $search_date2 = $request->date2 = $request->date2->format("Y-m-d");
                     } else {
-                        $search_date2 = "";
+                        $search_date2 = $request->date2 = $user->texts->max('created_at');
                     }
                     $search = $user->graphFilters()
                         ->where('date_from', '=', $search_date1)
@@ -152,7 +152,10 @@ class GraphFilterController extends Controller
             $keyword = strip_tags($request->keyword);
             $keyword = mb_strtolower($keyword);
             $keyword = str_replace(array('.', ',', "\n", "\t", "\r", "!", "?", ":", ";", "(", ")", "[", "]", "\"", "“", "„", " – "), ' ', $keyword);
+            $keyword2 = json_encode($keyword);
+            $keyword2 = str_replace("\"", '', $keyword);
             $textsQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
+            $textsQuery->orWhere('results', 'LIKE', "%\"" . $keyword2 . "\"%");
         }
         $texts = $textsQuery->orderBy('texts.id', 'ASC')
                 ->orderBy('text_analysis.created_at', 'ASC')
