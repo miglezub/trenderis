@@ -50,14 +50,15 @@ class AnalyseAsyncListener implements ShouldQueue
                 if($results) {
                     $text->update(['api_request_id' => null]);
                     $res[] = $results;
-                    $text_res[$text['id']] = count($results) > 10 ? array_slice($results, 0, 10, true) : $results;
+                    $text_res[$text['external_id']] = count($results['results']) > 10 ? array_slice($results['results'], 0, 10, true) : $results['results'];
                 }
             }
         }
         $apiRequestController = new ApiRequestController();
         $allResults = $apiRequestController->getResults($res);
         $json = array();
-        $json['results'] = $allResults;
+        $json['results'] = $allResults['results'];
+        $json['total'] = count($texts);
         $json['texts'] = $text_res;
         $encoded_json = json_encode($json, JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE);
 
