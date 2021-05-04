@@ -129,8 +129,8 @@
                     } else {
                         response.data.results.forEach(function(result) {
                             that.labels.push(result.date);
-                            that.freq.push(result.freq);
-                            that.tfidf.push(result.total);
+                            that.freq.push(result.total);
+                            that.tfidf.push(parseFloat(result.tfidf).toFixed(4));
                         });
                     }
 
@@ -167,14 +167,14 @@
                             datasets: [
                             {
                                 type: 'line',
-                                label: 'TF',
+                                label: 'Straipsnių kiekis',
                                 yAxisID: 'freq',
                                 data: that.freq,
                                 backgroundColor: "#F26D3D98"
                             },
                             {
                                 type: 'line',
-                                label: 'Straipsnių kiekis',
+                                label: 'TF-IDF',
                                 yAxisID: 'tfidf',
                                 data: that.tfidf,
                                 backgroundColor: "#6CCED985",
