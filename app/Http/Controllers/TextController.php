@@ -81,10 +81,12 @@ class TextController extends Controller
                 $keyword = strip_tags($request->keyword);
                 $keyword = mb_strtolower($keyword);
                 $keyword = str_replace(array('.', ',', "\n", "\t", "\r", "!", "?", ":", ";", "(", ")", "[", "]", "\"", "“", "„", " – "), ' ', $keyword);
-                $keyword = json_encode($keyword);
-                $keyword = str_replace("\"", '', $keyword);
-                $textsQuery->where('results', 'LIKE', "%" . $keyword . "%");
-                $textsTotalQuery->where('results', 'LIKE', "%" . $keyword . "%");
+                $keyword2 = json_encode($keyword);
+                $keyword2 = str_replace("\"", '', $keyword);
+                $textsQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
+                $textsQuery->orWhere('results', 'LIKE', "%\"" . $keyword2 . "\"%");
+                $textsTotalQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
+                $textsTotalQuery->orWhere('results', 'LIKE', "%\"" . $keyword2 . "\"%");
             }
             $texts = $textsQuery->orderBy('created_at', 'DESC')->groupBy('texts.id')->offset(($page-1) * $limit)->limit($limit)->get()->toArray();
             $total = count($textsTotalQuery->groupBy('texts.id')->get());
@@ -234,6 +236,7 @@ class TextController extends Controller
 
     public function analyse($id, Request $request)
     {
+        set_time_limit(150);
         $user = $request->user();
         if($user) {
             $text = $user->texts()->find($id);
@@ -316,7 +319,8 @@ class TextController extends Controller
 
         if($page > 1) {
             Cache::put('botis_page', $page - 1);
-            // return redirect()->route('import');
+            sleep(10);
+            return redirect()->route('import');
         }
     }
 
