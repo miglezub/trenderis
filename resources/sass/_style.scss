@@ -548,3 +548,10 @@ svg {
         }
     }
   }
+  #analysis-table {
+    td {
+        &:hover {
+            cursor: pointer;
+        }
+    }
+  }

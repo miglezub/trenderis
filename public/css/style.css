@@ -23925,4 +23925,8 @@ table {
   }
 }
 
+#analysis-table td:hover {
+  cursor: pointer;
+}
+
 
