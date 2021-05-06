@@ -133,6 +133,6 @@ class TextAnalysisController extends Controller
             'results' => json_encode($results, JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE ), 
             'top_results' => count($results) > 5 ? array_slice($results, 0, 5, true) : $results, 
             'duration' => $end - $start]);
-        return array('results' => $results, 'text_id' => $text->id);
+        return array('results' => $results, 'text_id' => isset($text->external_id) ? $text->external_id : $text->id);
     }
 }
