@@ -24,7 +24,7 @@
             </b-alert>
             <b-table
                 id="api-keys-table"
-                striped hover show-empty
+                striped hover show-empty responsive
                 :items="apiKeys"
                 :fields="fields"
                 :per-page="perPage"

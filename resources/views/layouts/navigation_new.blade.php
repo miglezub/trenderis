@@ -8,6 +8,7 @@
     <div id="sidebarCollapse" class="shrink"
         onclick="document.getElementById('sidebar').classList.toggle('shrink');
         document.getElementById('sidebarCollapse').classList.toggle('shrink');
+        document.getElementsByTagName('main')[0].classList.toggle('shrink');
         document.getElementById('sidebarToggle').classList.toggle('fa-chevron-right');
         document.getElementById('sidebarToggle').classList.toggle('fa-chevron-left');">
         <i id="sidebarToggle" class="fas fa-lg fa-chevron-right"></i>

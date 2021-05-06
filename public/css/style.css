@@ -23429,6 +23429,7 @@ span {
   height: 100%;
   background-color: #0367A6;
   transition: all 0.3s !important;
+  -webkit-transition: all 0.3s;
 }
 
 #top-navbar #sidebarCollapse i {
@@ -23446,15 +23447,100 @@ span {
   width: 80px;
 }
 
+@media (max-width: 768px) {
+  #top-navbar #sidebarCollapse {
+    width: 200px;
+  }
+
+  #top-navbar #sidebarCollapse #sidebarToggle {
+    padding-top: 22px;
+  }
+}
+
+@media (max-width: 576px) {
+  #top-navbar #sidebarCollapse {
+    width: 80px;
+  }
+}
+
 main {
   width: 100%;
   transition: all 0.3s;
+  -webkit-transition: all 0.3s;
+  width: calc(100% - 80px);
+}
+
+main.shrink {
+  width: calc(100% - 250px);
 }
 
 main #content {
   background: rgba(0, 0, 0, 0.05);
   min-height: 100vh;
   padding: 20px;
+}
+
+@media (max-width: 768px) {
+  main {
+    width: 100%;
+  }
+
+  main.shrink {
+    width: calc(100% - 200px);
+  }
+
+  main.shrink #api-keys-table {
+    display: block;
+  }
+
+  main.shrink #api-keys-table tr td,
+  main.shrink #api-keys-table tr th {
+    max-width: unset;
+  }
+
+  main.shrink #api-keys-table tr td:nth-child(1),
+  main.shrink #api-keys-table tr td:nth-child(2),
+  main.shrink #api-keys-table tr th:nth-child(1),
+  main.shrink #api-keys-table tr th:nth-child(2) {
+    min-width: 180px;
+  }
+}
+
+@media (max-width: 576px) {
+  main.shrink {
+    width: calc(100% - 80px);
+  }
+}
+
+@media (max-width: 768px) {
+  #api-keys-table tr td,
+  #api-keys-table tr th {
+    vertical-align: middle;
+    max-width: 25%;
+  }
+
+  #api-keys-table tr td:nth-child(2),
+  #api-keys-table tr th:nth-child(2) {
+    word-wrap: anywhere;
+  }
+
+  #api-keys-table .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+  }
+
+  #api-keys-table .btn-group .btn {
+    flex-basis: 100%;
+    margin-bottom: 5px;
+  }
+}
+
+@media (max-width: 576px) {
+  #api-keys-table tr td:nth-child(2),
+  #api-keys-table tr th:nth-child(2) {
+    min-width: 150px;
+  }
 }
 
 svg {
@@ -23472,6 +23558,7 @@ svg {
   background: #0367A6;
   color: #fff;
   transition: all 0.3s;
+  -webkit-transition: all 0.3s;
   position: relative;
 }
 
@@ -23591,7 +23678,6 @@ svg {
   position: absolute;
   top: 50%;
   right: 20px;
-  transform: translateY(-50%);
 }
 
 .wrapper #sidebar a .download {
@@ -23643,8 +23729,6 @@ svg {
   }
 
   .wrapper #sidebar ul li a i {
-    margin-right: 0;
-    display: block;
     font-size: 1.3em;
   }
 
@@ -23653,10 +23737,63 @@ svg {
   }
 }
 
+@media (max-width: 576px) {
+  .wrapper #sidebar {
+    min-width: 80px;
+    max-width: 80px;
+    width: auto;
+    text-align: center;
+  }
+
+  .wrapper #sidebar.shrink {
+    max-width: 0;
+  }
+
+  .wrapper #sidebar .sidebar-header {
+    flex-wrap: wrap;
+  }
+
+  .wrapper #sidebar .sidebar-header h3 {
+    display: none;
+  }
+
+  .wrapper #sidebar .sidebar-header strong {
+    display: block;
+  }
+
+  .wrapper #sidebar .CTAs {
+    display: none;
+  }
+
+  .wrapper #sidebar ul li a {
+    padding: 20px 10px;
+    text-align: center;
+    font-size: 0.85em;
+  }
+
+  .wrapper #sidebar ul li a i {
+    margin-right: 0;
+    display: block;
+    font-size: 1.8em;
+    margin-bottom: 5px;
+  }
+
+  .wrapper #sidebar ul ul a {
+    padding: 10px !important;
+  }
+
+  .wrapper #sidebar .dropdown-toggle::after {
+    top: auto;
+    bottom: 10px;
+    right: 50%;
+    transform: translateX(50%);
+  }
+}
+
 @media (max-width: 768px) {
   .dropdown-toggle::after {
     top: auto;
-    bottom: 10px;
+    bottom: 0;
     right: 50%;
     transform: translateX(50%);
   }
