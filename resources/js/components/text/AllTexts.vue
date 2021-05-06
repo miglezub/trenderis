@@ -145,9 +145,7 @@
             }
         },
         mounted() {
-            this.fetchData();
-            this.loadLanguages();
-            this.fetchApiKeys();
+            this.fetchData(true);
         },
         computed: {
             rows() {
@@ -162,8 +160,9 @@
             }
         },
         methods: {
-            async fetchData() {
-                this.busy = true;
+            async fetchData(first = false) {
+                this.isBusy = true;
+                this.totalTexts = 0;
                 var date1 = "";
                 var date2 = "";
                 if(this.date[0]) {
@@ -186,12 +185,20 @@
                     }
                 })
                 .catch(function (error) {
-                    $('#errorMessage').modal('show');
+                    if(error.response.status == 401) {
+                        window.location = "/login";
+                    } else {
+                        $('#errorMessage').modal('show');
+                    }
                 })
                 .then(response => {
                     this.texts = response.data.results;
                     this.totalTexts = response.data.total;
-                    this.busy = false;
+                    if(first) {
+                        this.loadLanguages();
+                    } else {
+                        this.isBusy = false;
+                    }
                 });
             },
             triggerDelete(id) {
@@ -202,7 +209,11 @@
                 this.axios
                     .delete(`/api/texts/${id}`)
                     .catch(function (error) {
-                        $('#errorMessage').modal('show');
+                        if(error.response.status == 401) {
+                            window.location = "/login";
+                        } else {
+                            $('#errorMessage').modal('show');
+                        }
                     })
                     .then(response => {
                         this.filterList();
@@ -221,6 +232,7 @@
                 }
             },
             clearFilter() {
+                this.isBusy = true;
                 $('form input, form select').removeClass('is-invalid');
                 this.date[0] = "";
                 this.date[1] = "";
@@ -254,7 +266,11 @@
                         }
                     })
                     .catch(function (error) {
-                        $('#errorMessage').modal('show');
+                        if(error.response.status == 401) {
+                            window.location = "/login";
+                        } else {
+                            $('#errorMessage').modal('show');
+                        }
                     })
                     .then(response => {
                         this.texts = response.data.results;
@@ -265,9 +281,16 @@
             loadLanguages() {
                 this.axios
                     .get('/api/languages')
+                    .catch(function (error) {
+                        if(error.response.status == 401) {
+                            window.location = "/login";
+                        } else {
+                            $('#errorMessage').modal('show');
+                        }
+                    })
                     .then(response => {
                         this.languages = response.data;
-                        this.isBusy = false;
+                        this.fetchApiKeys();
                     });
             },
             disabledTomorrowAndLater(date) {
@@ -279,8 +302,16 @@
             fetchApiKeys() {
                 this.axios
                     .get('/api/keys')
+                    .catch(function (error) {
+                        if(error.response.status == 401) {
+                            window.location = "/login";
+                        } else {
+                            $('#errorMessage').modal('show');
+                        }
+                    })
                     .then(response => {
                         this.keys = response.data;
+                        this.isBusy = false;
                     });
             },
         }

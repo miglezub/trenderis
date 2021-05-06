@@ -120,6 +120,13 @@ export default {
         fetchApiKeys() {
             this.axios
                 .get('/api/keys')
+                .catch(function (error) {
+                    if(error.response.status == 401) {
+                        window.location = "/login";
+                    } else {
+                        $('#errorMessage').modal('show');
+                    }
+                })
                 .then(response => {
                     this.keys = response.data;
                 });

@@ -59,6 +59,13 @@ import { required, minLength, maxLength } from "vuelidate/lib/validators";
                 } else {
                     this.axios
                         .get(`/api/keys/${this.id}`)
+                        .catch(function (error) {
+                            if(error.response.status == 401) {
+                                window.location = "/login";
+                            } else {
+                                $('#errorMessage').modal('show');
+                            }
+                        })
                         .then((res) => {
                             this.key = res.data;
                         });
@@ -86,9 +93,13 @@ import { required, minLength, maxLength } from "vuelidate/lib/validators";
                         }
                     })
                     .catch(function (error) {
-                        $('#editKeyModal').modal('hide');
-                        that.busy = false;
-                        that.$emit('editError');
+                        if(error.response.status == 401) {
+                            window.location = "/login";
+                        } else {
+                            $('#editKeyModal').modal('hide');
+                            that.busy = false;
+                            that.$emit('editError');
+                        }
                     })
                     .finally(() => this.loading = false)
             },

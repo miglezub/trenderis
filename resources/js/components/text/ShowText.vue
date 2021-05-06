@@ -85,10 +85,13 @@
                 </div>
             </div>
         </div>
+        <message id="errorMessage" type="error" title="Sistemos klaida" message="Atsiprašome, įvyko nenumatyta sistemos klaida."></message>
     </div>
 </template>
 <script>
+    import Message from '../layout/Message.vue';
     export default {
+        components: { Message },
         data() {
             return {
                 text: {},
@@ -143,12 +146,26 @@
                                 this.loadLanguages();
                             // }
                             this.isBusy = false;
+                        })
+                        .catch(function (error) {
+                            if(error.response.status == 401) {
+                                window.location = "/login";
+                            } else {
+                                $('#errorMessage').modal('show');
+                            }
                         });
                 }
             },
             loadLanguages() {
                 this.axios
                     .get('/api/languages')
+                    .catch(function (error) {
+                        if(error.response.status == 401) {
+                            window.location = "/login";
+                        } else {
+                            $('#errorMessage').modal('show');
+                        }
+                    })
                     .then(response => {
                         this.languages = response.data;
                     });
@@ -163,6 +180,13 @@
                 var that = this;
                 this.axios
                     .post(`/api/analyse/${this.$route.params.id}`, this.text)
+                    .catch(function (error) {
+                        if(error.response.status == 401) {
+                            window.location = "/login";
+                        } else {
+                            $('#errorMessage').modal('show');
+                        }
+                    })
                     .then(function(response) {
                         that.busyAnalysis = false;
                         if(response.error) {

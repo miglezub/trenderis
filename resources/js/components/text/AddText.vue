@@ -43,10 +43,12 @@
                 </div>
             </form>
         </div>
+        <message id="errorMessage" type="error" title="Sistemos klaida" message="Atsiprašome, įvyko nenumatyta sistemos klaida."></message>S
     </div>
 </template>
  
 <script>
+import Message from '../layout/Message.vue';
 import { required, minValue } from "vuelidate/lib/validators";
     export default {
         data() {
@@ -66,6 +68,13 @@ import { required, minValue } from "vuelidate/lib/validators";
         created() {
             this.axios
                 .get('/api/languages')
+                .catch(function (error) {
+                    if(error.response.status == 401) {
+                        window.location = "/login";
+                    } else {
+                        $('#errorMessage').modal('show');
+                    }
+                })
                 .then(response => {
                     this.languages = response.data;
                 });
@@ -102,7 +111,13 @@ import { required, minValue } from "vuelidate/lib/validators";
                             }
                         }
                     })
-                    .catch(err => console.log(err))
+                    .catch(function (error) {
+                        if(error.response.status == 401) {
+                            window.location = "/login";
+                        } else {
+                            $('#errorMessage').modal('show');
+                        }
+                    })
                     .finally(() => this.loading = false)
             },
         }

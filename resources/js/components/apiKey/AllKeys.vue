@@ -126,7 +126,11 @@
                 this.axios
                     .get('/api/keys')
                     .catch(function (error) {
-                        $('#errorMessage').modal('show');
+                        if(error.response.status == 401) {
+                            window.location = "/login";
+                        } else {
+                            $('#errorMessage').modal('show');
+                        }
                     })
                     .then(response => {
                         this.apiKeys = response.data;
@@ -142,7 +146,11 @@
                 this.axios
                     .post('/api/keys', this.key)
                     .catch(function (error) {
-                        $('#errorMessage').modal('show');
+                        if(error.response.status == 401) {
+                            window.location = "/login";
+                        } else {
+                            $('#errorMessage').modal('show');
+                        }
                     })
                     .then(function(response) {
                         that.generateBusy = false;
@@ -153,7 +161,6 @@
                             that.fetchData();
                         }
                     })
-                    .catch(err => console.log(err))
                     .finally(() => this.loading = false)
             },
             triggerDelete(id) {
@@ -164,7 +171,11 @@
                 this.axios
                     .delete(`/api/keys/${id}`)
                     .catch(function (error) {
-                        $('#errorMessage').modal('show');
+                        if(error.response.status == 401) {
+                            window.location = "/login";
+                        } else {
+                            $('#errorMessage').modal('show');
+                        }
                     })
                     .then(response => {
                         let i = this.apiKeys.map(data => data.id).indexOf(id);

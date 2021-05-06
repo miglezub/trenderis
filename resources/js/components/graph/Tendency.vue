@@ -18,16 +18,19 @@
                 </b-overlay>
             </div>
         </div>
+    <message id="errorMessage" type="error" title="Sistemos klaida" message="Atsiprašome, įvyko nenumatyta sistemos klaida."></message>
     </div>
 </template>
 <script>
   import LineChart from './LineChart.js'
   import FilterModal from './FilterModal.vue';
+  import Message from '../layout/Message.vue';
 
   export default {
     components: {
       LineChart,
-      FilterModal
+      FilterModal,
+      Message
     },
     data () {
       return {
@@ -112,6 +115,13 @@
                         api_key: filter.key,
                         keyword: filter.keyword,
                         initial: filter.initial
+                    }
+                })
+                .catch(function (error) {
+                    if(error.response.status == 401) {
+                        window.location = "/login";
+                    } else {
+                        $('#errorMessage').modal('show');
                     }
                 })
                 .then(response => {
