@@ -17,7 +17,7 @@ class GraphFilterController extends Controller
         $user = \App\Models\User::find(1);
         $texts = $user->texts()->get()->toArray();
         $end = microtime(true);
-        return response()->json(array('results' => $this->getResults($texts), 'time' => $end - $start));
+        return response()->json(array('results' => $this->getResults($texts, $user), 'time' => $end - $start));
     }
 
     public function filter(Request $request) {
@@ -44,6 +44,8 @@ class GraphFilterController extends Controller
                         $search_date1 = $request->date1 = substr($request->date1, 0, strpos($request->date1, "T"));
                     } else if(!empty($request->date1) && !is_string($request->date1)) {
                         $search_date1 = $request->date1 = $request->date1->format("Y-m-d");
+                    } else if (is_string($request->date1) && !strpos($request->date1, "T")){
+                        $search_date1 = $request->date1;
                     } else {
                         $search_date1 = $request->date1 = $user->texts->min('created_at');
                     }
@@ -51,6 +53,8 @@ class GraphFilterController extends Controller
                         $search_date2 = $request->date2 = substr($request->date2, 0, strpos($request->date2, "T"));
                     } else if(!empty($request->date2) && !is_string($request->date2)) {
                         $search_date2 = $request->date2 = $request->date2->format("Y-m-d");
+                    } else if (is_string($request->date2) && !strpos($request->date2, "T")){
+                        $search_date2 = $request->date2;
                     } else {
                         $search_date2 = $request->date2 = $user->texts->max('created_at');
                     }
@@ -129,7 +133,7 @@ class GraphFilterController extends Controller
             }
         }
         $texts = $textsQuery->get()->toArray();
-        return $this->getResults($texts);
+        return $this->getResults($texts, $request);
     }
 
     private function filterKeyword(Request $request) {
@@ -195,7 +199,65 @@ class GraphFilterController extends Controller
         return $res;
     }
 
-    private function getResults($texts) {
+    private function getResults($texts, $request, $limit = 1) {
+        $results = array();
+        $total_documents = $request->user()->texts()->count();
+        $total_texts = count($texts);
+        foreach($texts as $text) {
+            $analysis = \App\Models\TextAnalysis::where('text_id', '=', $text['id'])->orderBy('id', 'DESC')->take(1)->get()->last();
+            if($analysis && $analysis->results) {
+                foreach(json_decode($analysis->results) as $a) {
+                    if(!is_bool($a) && isset($a->w)) {
+                        if(!key_exists($a->w, $results) && ($limit && ((isset($a->idf) && $a->idf >= $limit) || !isset($a->idf)))) {
+                            $results[$a->w] = array();
+                            $results[$a->w]['w'] = $a->w;
+                            $results[$a->w]['freq'] = $a->freq;
+                            $results[$a->w]['tf'] = $a->tf;
+                            if(isset($a->idf)
+                                && (!key_exists('idf', $results[$a->w]) 
+                                || (key_exists('idf', $results[$a->w]) && $a->idf < $results[$a->w]['idf']))) {
+                                    
+                                    $results[$a->w]['idf'] = $a->idf;
+                            } else {
+                                $results[$a->w]['idf'] = 1;
+                            }
+                            $results[$a->w]['tfidf'] = $results[$a->w]['tf'] * $results[$a->w]['idf'];
+                            if($limit && $results[$a->w]['idf'] < $limit) {
+                                unset($results[$a->w]);
+                            }
+                        } else if(key_exists($a->w, $results)) {
+                            $results[$a->w]['freq'] += $a->freq;
+                            $results[$a->w]['tf'] += $a->tf;
+                            if(!key_exists('tfidf', $results[$a->w])) {
+                                $results[$a->w]['tfidf'] = 0;
+                            }
+                            if(isset($a->idf)
+                                && $a->idf != 1
+                                && (!key_exists('idf', $results[$a->w]) 
+                                || (key_exists('idf', $results[$a->w]) && $a->idf < $results[$a->w]['idf']))) {
+                                    
+                                    $results[$a->w]['idf'] = $a->idf;
+                            } else if($total_texts < 2000 && $results[$a->w]['idf'] == 1 && $results[$a->w]['tfidf'] > 1) {
+                                $search = '%' . $a->w . '%';
+                                $document_count = $request->user()->texts()->where('language_id', '=', $text['language_id'])->whereRaw('lower(original_text) like (?)',["{$search}"])->count();
+                                $a->idf = log($total_documents/$document_count, 10);
+                                $results[$a->w]['idf'] = $a->idf;
+                            }
+                            $results[$a->w]['tfidf'] = $results[$a->w]['tf'] * $results[$a->w]['idf'];
+                            if($limit && $results[$a->w]['idf'] < $limit) {
+                                unset($results[$a->w]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        usort($results, array(TextAnalysisController::class, "cmp"));
+        $results = array_splice($results, 0, 20, true);
+        return array('results' => $results, 'total' => count($texts));
+    }
+
+    private function getResultsOld($texts) {
         $results = array();
         foreach($texts as $text) {
             $analysis = \App\Models\TextAnalysis::where('text_id', '=', $text['id'])->orderBy('id', 'DESC')->take(1)->get()->last();
@@ -230,11 +292,6 @@ class GraphFilterController extends Controller
                 }
             }
         }
-        // $res = array();
-        // foreach($results as $key => $result) {
-        //     $results[$key]['w'] = $key;
-        //     $res[] = $results[$key];
-        // }
         usort($results, array(TextAnalysisController::class, "cmp"));
         $results = array_splice($results, 0, 20, true);
         return array('results' => $results, 'total' => count($texts));
