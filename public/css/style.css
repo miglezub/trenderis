@@ -23951,24 +23951,43 @@ svg {
   display: inline-block;
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
+  .filter form .form-group:nth-child(3) {
+    width: 320px;
+  }
+}
+
+@media (max-width: 1310px) {
   .filter form {
-    display: flex;
+    display: flex !important;
     flex-wrap: wrap;
-    flex-direction: column;
-    flex-basis: 80%;
-    padding-bottom: 16px;
   }
 
   .filter form .form-group {
     flex-basis: 50%;
-    display: block;
+    padding: 0 10px;
   }
 
-  .filter form .form-group input,
-  .filter form .form-group select {
-    max-width: 318px;
-    display: block;
+  .filter form .mx-datepicker {
+    width: 100%;
+  }
+
+  .filter form .btn {
+    height: -webkit-min-content;
+    height: -moz-min-content;
+    height: min-content;
+    align-self: end;
+    margin-bottom: 16px;
+    margin-left: 10px;
+  }
+}
+
+@media (max-width: 992px) {
+  .filter form {
+    display: flex;
+    flex-wrap: wrap;
+    flex-basis: 100%;
+    padding-bottom: 16px;
   }
 
   .filter form .btn {
@@ -23987,6 +24006,8 @@ svg {
     flex-basis: 100%;
     display: flex;
     flex-wrap: wrap;
+    width: auto !important;
+    padding: 0;
   }
 
   .filter form .form-group input,
@@ -23998,6 +24019,10 @@ svg {
 
   .filter form .mx-datepicker-range {
     width: 100%;
+  }
+
+  .filter form .btn:nth-child(1) {
+    margin-left: 0;
   }
 }
 
@@ -24011,14 +24036,19 @@ svg {
   flex-basis: 16%;
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1310px) {
   .filter a.btn {
-    flex-basis: 20%;
-    width: -webkit-max-content;
-    width: -moz-max-content;
-    width: max-content;
     align-self: end;
     margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 992px) {
+  .filter a.btn {
+    flex-basis: 100%;
+    max-width: -webkit-max-content;
+    max-width: -moz-max-content;
+    max-width: max-content;
     margin-left: auto;
   }
 }
@@ -24029,6 +24059,51 @@ svg {
     width: -webkit-max-content;
     width: -moz-max-content;
     width: max-content;
+  }
+}
+
+@media (max-width: 992px) {
+  .filter {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 1024px) {
+  #texts-table .btn-group {
+    flex-wrap: wrap;
+  }
+
+  #texts-table .btn-group .btn {
+    border-radius: 0.25rem !important;
+  }
+
+  #texts-table .btn-group .btn-primary {
+    margin-bottom: 5px;
+  }
+}
+
+@media (max-width: 850px) {
+  #texts-table tr td:nth-child(1),
+  #texts-table tr th:nth-child(1) {
+    width: 36%;
+  }
+}
+
+@media (max-width: 768px) {
+  #texts-table tr td:nth-child(1),
+  #texts-table tr th:nth-child(1) {
+    width: 40%;
+  }
+}
+
+@media (max-width: 576px) {
+  #texts-table {
+    display: block !important;
+  }
+
+  #texts-table tr td:nth-child(1),
+  #texts-table tr th:nth-child(1) {
+    min-width: 220px;
   }
 }
 
@@ -24058,7 +24133,7 @@ table {
   }
 
   table .btn-group .btn-primary {
-    margin-bottom: 10px;
+    margin-bottom: 5px;
   }
 }
 

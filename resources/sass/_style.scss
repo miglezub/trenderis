@@ -588,24 +588,37 @@ svg {
         flex-direction: column;
       }
       form {
-          flex-basis: 84%;
-          .form-group {
+        flex-basis: 84%;
+        .form-group {
             display:inline-block;
-          }
+            &:nth-child(3) {
+                @include ipad {
+                    width: 320px;
+                }
+            }
+        }
+        @media (max-width: 1310px) {
+            display: flex !important;
+            flex-wrap: wrap;
+            .form-group {
+                flex-basis: 50%;
+                padding: 0 10px;
+            }
+            .mx-datepicker {
+                width: 100%;
+            }
+            .btn {
+                height: min-content;
+                align-self: end;
+                margin-bottom: 16px;
+                margin-left: 10px;
+            }
+        }
           @include lg {
             display: flex;
             flex-wrap: wrap;
-            flex-direction: column;
-            flex-basis: 80%;
+            flex-basis: 100%;
             padding-bottom: 16px;
-            .form-group {
-                flex-basis: 50%;
-                display: block;
-                input, select {
-                    max-width: 318px;
-                    display: block;
-                }
-            }
             .btn {
                 width: min-content;
             }
@@ -616,6 +629,8 @@ svg {
                 flex-basis: 100%;
                 display: flex;
                 flex-wrap: wrap;
+                width: auto !important;
+                padding: 0;
                 input, select, label {
                     flex-basis: 100%;
                     display: flex;
@@ -624,17 +639,24 @@ svg {
             .mx-datepicker-range {
                 width: 100%;
             }
+            .btn {
+                &:nth-child(1) {
+                    margin-left: 0;
+                }
+            }
           }
       }
       a.btn {
           height: min-content;
           width: min-content;
           flex-basis: 16%;
-          @include lg {
-            flex-basis: 20%;
-            width: max-content;
+          @media (max-width: 1310px) {
             align-self: end;
             margin-bottom: 16px;
+          }
+          @include lg {
+            flex-basis: 100%;
+            max-width: max-content;
             margin-left: auto;
           }
           @include sm {
@@ -642,6 +664,50 @@ svg {
             width: max-content;
           }
       }
+      @include lg {
+          flex-wrap: wrap;
+      }
+  }
+  #texts-table {
+    @include ipad {
+        .btn-group {
+            flex-wrap: wrap;
+            .btn {
+                border-radius: 0.25rem !important;
+            }
+            .btn-primary {
+                margin-bottom: 5px;
+            }
+        }
+    }
+    @media(max-width: 850px) {
+        tr {
+            td, th {
+                &:nth-child(1) {
+                    width: 36%;
+                }
+            }
+        }
+    }
+    @include md {
+        tr {
+            td, th {
+                &:nth-child(1) {
+                    width: 40%;
+                }
+            }
+        }
+    }
+    @include sm {
+        display: block !important;
+        tr {
+            td, th {
+                &:nth-child(1) {
+                    min-width: 220px;
+                }
+            }
+        }
+    }
   }
   table {
     display: inline-table !important;
@@ -660,7 +726,7 @@ svg {
                 border-radius: 0.25rem !important;
             }
             .btn-primary {
-                margin-bottom: 10px;
+                margin-bottom: 5px;
             }
         }
     }

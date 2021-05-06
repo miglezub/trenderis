@@ -29,6 +29,7 @@ $p1-success-hover: #04C974;
 $screen-sm-min: 576px;
 $screen-md-min: 768px;
 $screen-lg-min: 992px;
+$screen-ipad-min: 1024px;
 $screen-xl-min: 1200px;
 
 @mixin sm {
@@ -48,6 +49,11 @@ $screen-xl-min: 1200px;
  }
  @mixin xl {
     @media (max-width: #{$screen-xl-min}) {
+        @content;
+    }
+ }
+ @mixin ipad {
+    @media (max-width: #{$screen-ipad-min}) {
         @content;
     }
  }
