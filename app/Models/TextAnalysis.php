@@ -12,11 +12,12 @@ class TextAnalysis extends Model
     protected $fillable = [
         'use_word2vec',
         'use_idf',
-        'lemmatized_text',
         'results',
         'duration',
         'top_results'
     ]; 
+
+    public $timestamps = false;
 
     public function text()
     {

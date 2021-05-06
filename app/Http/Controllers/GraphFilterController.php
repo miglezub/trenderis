@@ -158,7 +158,7 @@ class GraphFilterController extends Controller
             $textsQuery->orWhere('results', 'LIKE', "%\"" . $keyword2 . "\"%");
         }
         $texts = $textsQuery->orderBy('texts.id', 'ASC')
-                ->orderBy('text_analysis.created_at', 'ASC')
+                ->orderBy('text_analysis.id', 'desc')
                 ->groupBy('texts.id')
                 ->get();
         $results = array();
@@ -198,7 +198,7 @@ class GraphFilterController extends Controller
     private function getResults($texts) {
         $results = array();
         foreach($texts as $text) {
-            $analysis = \App\Models\TextAnalysis::where('text_id', '=', $text['id'])->orderBy('updated_at')->take(1)->get()->last();
+            $analysis = \App\Models\TextAnalysis::where('text_id', '=', $text['id'])->orderBy('id', 'DESC')->take(1)->get()->last();
             if($analysis && $analysis->results) {
                 foreach(json_decode($analysis->results) as $a) {
                     if(!is_bool($a) && isset($a->w)) {

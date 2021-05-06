@@ -188,7 +188,6 @@ class ApiRequestController extends Controller
                 ->delete();
         if($analyse && $newText) {
             $analysis = $newText->text_analysis()->create([
-                'lemmatized_text' => '',
                 'results' => '',
                 'use_idf' => $type == "tfidf" ? true : false,
                 'use_word2vec' => $word2vec
