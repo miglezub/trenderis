@@ -71,13 +71,16 @@ class ApiRequestController extends Controller
         if(!isset($request->type)) {
             $json['error']['type'] = "Nenurodytas grafiko tipas";
             $error = true;
+        } else if($request->type != 1 && $request->type != 2) {
+            $json['error']['type'] = "Nurodytas blogas grafiko tipas. Galimi variantai: 1 - populiariausiu raktazodziu grafikas, 2 - raktazodzio istorinis grafikas";
+            $error = true;
         }
         if(isset($request->type) && $request->type == 2 && !isset($request->keyword)) {
             $json['error']['keyword'] = "Nenurodytas grafiko raktazodis";
             $error = true;
         }
-        if(!isset($request->date1) && !isset($request->date2)) {
-            $json['error']['date'] = "Nenurodytos datos";
+        if((!isset($request->type) || $request->type == 1) && !isset($request->date1) && !isset($request->date2)) {
+            $json['error']['dates'] = "Nenurodytos datos";
             $error = true;
         }
         if(!$error) {
@@ -108,7 +111,7 @@ class ApiRequestController extends Controller
             $json['error']['texts'] = "Nenurodyti tekstai";
             $error = true;
         }
-        if(count($request->texts) >= 10 && !isset($request->callback)) {
+        if(count($request->texts) > 1 && !isset($request->callback)) {
             //validatint ar geras urlas
             $json['error']['callback'] = "Nenurodyta callback nuoroda";
             $error = true;
@@ -141,7 +144,7 @@ class ApiRequestController extends Controller
             $request->setUserResolver(function () use ($user) {
                 return $user;
             });
-            if(count($request->texts) < 10) {
+            if(count($request->texts) < 2) {
                 $json = $this->addAndAnalyse($request, $type, $word2vec);
                 return response()->json($json);
             } else {
