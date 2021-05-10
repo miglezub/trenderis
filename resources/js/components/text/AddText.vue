@@ -43,7 +43,7 @@
                 </div>
             </form>
         </div>
-        <message id="errorMessage" type="error" title="Sistemos klaida" message="Atsiprašome, įvyko nenumatyta sistemos klaida."></message>S
+        <message id="errorMessage" type="error" title="Sistemos klaida" message="Atsiprašome, įvyko nenumatyta sistemos klaida."></message>
     </div>
 </template>
  

@@ -8,12 +8,12 @@
             <div class="col-md-12">
                 <b-button class="btn btn-primary float-right mb-2" @click="showModal()">Atnaujinti analizę</b-button>
             </div>
-            <div class="col-md-6" id="jumbotron-container">
+            <div class="col-lg-6 col-md-12 mb-3" id="jumbotron-container">
                 <h5 class="jumbotron font-weight-bold" id="title-jumbotron" v-html="text.title" v-if="text.title"></h5>
                 <div class="jumbotron" id="show-text" v-html="text.original_text">
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-lg-6 col-md-12 mb-3">
                 <b-table
                     id="analysis-table"
                     striped hover show-empty sort-icon-left
