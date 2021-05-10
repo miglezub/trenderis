@@ -23920,6 +23920,24 @@ svg {
   height: 100%;
 }
 
+@media (max-width: 992px) {
+  .chart-container > div > div {
+    min-height: 450px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chart-container > div > div {
+    min-height: 350px;
+  }
+}
+
+@media (max-width: 576px) {
+  .chart-container > div > div {
+    min-height: 180px;
+  }
+}
+
 .chart-container .spinner-border {
   width: 3rem;
   height: 3rem;
@@ -23957,7 +23975,7 @@ svg {
   }
 }
 
-@media (max-width: 1310px) {
+@media (max-width: 1330px) {
   .filter form {
     display: flex !important;
     flex-wrap: wrap;
@@ -24021,8 +24039,12 @@ svg {
     width: 100%;
   }
 
-  .filter form .btn:nth-child(1) {
-    margin-left: 0;
+  .filter form .btn {
+    margin: 0;
+  }
+
+  .filter form .btn:first-of-type {
+    margin-right: 10px;
   }
 }
 
@@ -24030,13 +24052,17 @@ svg {
   height: -webkit-min-content;
   height: -moz-min-content;
   height: min-content;
-  width: -webkit-min-content;
-  width: -moz-min-content;
-  width: min-content;
+  width: -webkit-max-content;
+  width: -moz-max-content;
+  width: max-content;
+  max-width: -webkit-max-content;
+  max-width: -moz-max-content;
+  max-width: max-content;
   flex-basis: 16%;
+  margin-left: auto;
 }
 
-@media (max-width: 1310px) {
+@media (max-width: 1330px) {
   .filter a.btn {
     align-self: end;
     margin-bottom: 16px;
@@ -24046,19 +24072,7 @@ svg {
 @media (max-width: 992px) {
   .filter a.btn {
     flex-basis: 100%;
-    max-width: -webkit-max-content;
-    max-width: -moz-max-content;
-    max-width: max-content;
     margin-left: auto;
-  }
-}
-
-@media (max-width: 576px) {
-  .filter a.btn {
-    flex-basis: 100%;
-    width: -webkit-max-content;
-    width: -moz-max-content;
-    width: max-content;
   }
 }
 
@@ -24139,6 +24153,54 @@ table {
 
 #analysis-table td:hover {
   cursor: pointer;
+}
+
+#documentation-table,
+#text-info-table,
+#graph-data-table {
+  max-width: 1200px;
+  font-size: 0.9rem;
+}
+
+#documentation-table thead,
+#text-info-table thead,
+#graph-data-table thead {
+  font-size: 0.95rem;
+}
+
+#documentation-table thead tr:first-of-type th,
+#documentation-table thead tr:first-of-type td,
+#text-info-table thead tr:first-of-type th,
+#text-info-table thead tr:first-of-type td,
+#graph-data-table thead tr:first-of-type th,
+#graph-data-table thead tr:first-of-type td {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-bottom: 4px solid #dee2e6;
+}
+
+#documentation-table tr.apiExample th,
+#documentation-table tr.apiExample td,
+#text-info-table tr.apiExample th,
+#text-info-table tr.apiExample td,
+#graph-data-table tr.apiExample th,
+#graph-data-table tr.apiExample td {
+  border-top: 4px solid #dee2e6;
+}
+
+@media (max-width: 768px) {
+  #documentation-table,
+  #text-info-table,
+  #graph-data-table {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  #documentation-table,
+  #text-info-table,
+  #graph-data-table {
+    display: block !important;
+  }
 }
 
 

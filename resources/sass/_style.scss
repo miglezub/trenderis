@@ -745,3 +745,31 @@ svg {
         }
     }
   }
+  #documentation-table, #text-info-table, #graph-data-table {
+      max-width: 1200px;
+      font-size: 0.9rem;
+      thead {
+        font-size: 0.95rem;
+        tr {
+            &:first-of-type {
+                th, td {
+                    background-color: rgba(0, 0, 0, 0.05);
+                    border-bottom: 4px solid #dee2e6;
+                }
+            }
+        }
+      }
+      tr {
+          &.apiExample {
+              th, td {
+                  border-top: 4px solid #dee2e6;;
+              }
+          }
+      }
+      @include md {
+        max-width: 100%;
+      }
+      @include sm {
+        display: block !important;
+      }
+  }

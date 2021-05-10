@@ -36,6 +36,9 @@
             <li :class="{'router-link-active': subIsActive('/graphs')}">
                 <router-link :to="{name: 'graphs'}"><i class="far fa-chart-bar"></i>Grafikai</router-link>
             </li>
+            <li :class="{'router-link-active': subIsActive('/documentation')}">
+                <router-link :to="{name: 'documentation'}"><i class="fas fa-book"></i>API kliento vadovas</router-link>
+            </li>
         </ul>
 
         <!-- <ul class="list-unstyled CTAs">

@@ -3,6 +3,7 @@ import AddText from './components/text/AddText.vue';
 import ShowText from './components/text/ShowText.vue';
 import AllKeys from './components/apiKey/AllKeys.vue';
 import TendencyGraph from './components/graph/Tendency.vue';
+import Documentation from './components/documentation/Main.vue';
 
 import PageNotFound from './components/PageNotFound.vue';
  
@@ -32,6 +33,11 @@ export const routes = [
         name: 'graphs',
         path: '/graphs/',
         component: TendencyGraph
+    },
+    {
+        name: 'documentation',
+        path: '/documentation/',
+        component: Documentation
     },
     { path: "*", component: PageNotFound }
 ];
