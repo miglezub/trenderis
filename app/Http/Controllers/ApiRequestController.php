@@ -172,7 +172,7 @@ class ApiRequestController extends Controller
         }
     }
 
-    private function add($text, $user, $language, $type, $word2vec, $api_key, $analyse = true, $api_request_id = null) {
+    private function add($text, $user, $language, $type, $word2vec, $api_key, $analyse = true, $api_request_id = null, $analyse_limit = null) {
         $newText = $user->texts()->create([
             'title' => key_exists('title', $text) ? html_entity_decode($text['title']) : "",
             'original_text' => html_entity_decode($text['description']),
@@ -196,7 +196,7 @@ class ApiRequestController extends Controller
                 'use_word2vec' => $word2vec
             ]);
             $analysisController = new TextAnalysisController();
-            $results = $analysisController->analyse($analysis->id, auth()->user()->id);
+            $results = $analysisController->analyse($analysis->id, auth()->user()->id, $analyse_limit);
             return $results;
         } else if(!$analyse && $newText) {
             return true;
@@ -259,7 +259,7 @@ class ApiRequestController extends Controller
                 //teksta prideda tik tada jei turi descriptiona ir external id unikalu
                 if(isset($text['description']) 
                     && !$request->user()->texts()->where('external_id', '=', $text['id'])->exists()) {
-                        $a = $this->add($text, $request->user(), $request->language, $type, $word2vec, $request->api_key);
+                        $a = $this->add($text, $request->user(), $request->language, $type, $word2vec, $request->api_key, true, null, 20);
                         if($a != false) {
                             $analysis[] = $a;
                             $texts[$text['id']] = count($a) > 10 ? array_slice($a, 0, 10, true) : $a;
