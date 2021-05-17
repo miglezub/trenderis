@@ -20,21 +20,21 @@ else:
 cursor.execute(query)
 myresult = cursor.fetchall()
 
-if(os.path.exists("./word2vec")):
-  model = gensim.models.Word2Vec.load("./word2vec")
+if(os.path.exists("../word2vec")):
+  model = gensim.models.Word2Vec.load("../word2vec")
 for text in myresult:
   t = text[1].lower();
   sentences = re.split(r' *[\.\?!][\'"\)\]]* *', str(t))
   sentences_split = []
   for s in sentences:
       sentences_split.append(s.split())
-  if(os.path.exists("./word2vec")):
+  if(os.path.exists("../word2vec")):
     model.build_vocab(sentences_split, update=True)
     model.train(sentences_split, total_examples=len(sentences_split), epochs=model.epochs)
-    model.save('./word2vec')
+    model.save('../word2vec')
   else:
     model = gensim.models.Word2Vec(sentences_split, window=3, min_count=1)
-    model.save('./word2vec')
+    model.save('../word2vec')
 
   sql = "UPDATE texts SET trained_word2vec = '1' WHERE id=" + str(text[0])
   cursor.execute(sql)

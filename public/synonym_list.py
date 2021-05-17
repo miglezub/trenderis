@@ -1,7 +1,7 @@
 import mysql.connector, sys, gensim, logging, re, codecs, json
 
 if(len(sys.argv) > 1):
-  model = gensim.models.Word2Vec.load("./word2vec")
+  model = gensim.models.Word2Vec.load("../word2vec")
 
   mydb = mysql.connector.connect(
     host="localhost",
@@ -23,11 +23,15 @@ if(len(sys.argv) > 1):
       j = 0
       for word in json_result:
         if j < 20:
-          word['syn'] = json.dumps(model.wv.most_similar(word['w'], topn=3))
+          # word['w'] = str(word['w']).encode('utf8')
+          if str(word['w']) in model.wv.vocab:
+            word['syn'] = json.dumps(str(model.wv.most_similar(str(word['w']), topn=3)))
+            print(word['syn'])
           j += 1
         else: break
-      query = ("UPDATE text_analysis set results='" + json.dumps(json_result, ensure_ascii=False) + "' WHERE id=" + str(analysis[0]))
-      cursor.execute(query)
+      print(json.dumps(json_result, ensure_ascii=False))
+      sql = "UPDATE text_analysis set results=%s WHERE id=%s"
+      cursor.execute(sql, (json.dumps(json_result, ensure_ascii=False), str(analysis[0])))
       mydb.commit()
   cursor.close()
   mydb.close()
