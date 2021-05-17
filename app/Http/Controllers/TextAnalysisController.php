@@ -69,8 +69,8 @@ class TextAnalysisController extends Controller
         $user = User::find($user_id);
         $total_documents = $user->texts()->count();
         $index = 0;
-        $count = count($results) > 100 ? count($results) / 5 : count($results);
-        $count = $count > 100 ? 100 : $count;
+        $count = count($results) > 50 ? count($results) / 5 : count($results);
+        $count = $count > 50 ? 50 : $count;
         foreach($results as $key => $result) {
             if(!is_array($results[$key])) {
                 $results[$key] = array();
