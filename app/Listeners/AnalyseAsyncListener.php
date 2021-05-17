@@ -62,13 +62,17 @@ class AnalyseAsyncListener implements ShouldQueue
         $json['texts'] = $text_res;
         $encoded_json = json_encode($json, JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE);
 
+        $this->sendCallback($event, $encoded_json);
+    }
+
+    private function sendCallback(AsyncAnalysis $event, $json) {
         $ch = curl_init($event->api_request->callback);                                                                      
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");                                                                     
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $encoded_json);                                                                  
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $json);                                                                  
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);                                                                      
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          
             'Content-Type: application/json',                                                                                
-            'Content-Length: ' . strlen($encoded_json))                                                                       
+            'Content-Length: ' . strlen($json))                                                                       
         );                                                                                                                 
         $result = curl_exec($ch);
         Log::debug($result);
