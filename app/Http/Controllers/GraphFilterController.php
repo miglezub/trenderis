@@ -27,7 +27,7 @@ class GraphFilterController extends Controller
             switch ($request->type) {
                 case 1:
                     if($request->initial == 1) {
-                        $minDate = $user->texts->last();
+                        $minDate = $user->texts->sortByDesc('created_at')->values()->first();
                         if($minDate == null) {
                             $minDate = date("Y-m-d H:i:s");
                         } else {
@@ -205,47 +205,50 @@ class GraphFilterController extends Controller
         $total_texts = count($texts);
         foreach($texts as $text) {
             $analysis = \App\Models\TextAnalysis::where('text_id', '=', $text['id'])->orderBy('id', 'DESC')->take(1)->get()->last();
-            if($analysis && $analysis->results) {
-                foreach(json_decode($analysis->results) as $a) {
-                    if(!is_bool($a) && isset($a->w)) {
-                        if(!key_exists($a->w, $results) && ($limit && ((isset($a->idf) && $a->idf >= $limit) || !isset($a->idf)))) {
-                            $results[$a->w] = array();
-                            $results[$a->w]['w'] = $a->w;
-                            $results[$a->w]['freq'] = $a->freq;
-                            $results[$a->w]['tf'] = $a->tf;
-                            if(isset($a->idf)
-                                && (!key_exists('idf', $results[$a->w]) 
-                                || (key_exists('idf', $results[$a->w]) && $a->idf < $results[$a->w]['idf']))) {
-                                    
+            if($analysis && isset($analysis->results)) {
+                $decoded = json_decode($analysis->results);
+                if(is_array($decoded)) {
+                    foreach($decoded as $a) {
+                        if(!is_bool($a) && isset($a->w)) {
+                            if(!key_exists($a->w, $results) && ($limit && ((isset($a->idf) && $a->idf >= $limit) || !isset($a->idf)))) {
+                                $results[$a->w] = array();
+                                $results[$a->w]['w'] = $a->w;
+                                $results[$a->w]['freq'] = $a->freq;
+                                $results[$a->w]['tf'] = $a->tf;
+                                if(isset($a->idf)
+                                    && (!key_exists('idf', $results[$a->w]) 
+                                    || (key_exists('idf', $results[$a->w]) && $a->idf < $results[$a->w]['idf']))) {
+                                        
+                                        $results[$a->w]['idf'] = $a->idf;
+                                } else {
+                                    $results[$a->w]['idf'] = 1;
+                                }
+                                $results[$a->w]['tfidf'] = $results[$a->w]['tf'] * $results[$a->w]['idf'];
+                                if($limit && $results[$a->w]['idf'] < $limit) {
+                                    unset($results[$a->w]);
+                                }
+                            } else if(key_exists($a->w, $results)) {
+                                $results[$a->w]['freq'] += $a->freq;
+                                $results[$a->w]['tf'] += $a->tf;
+                                if(!key_exists('tfidf', $results[$a->w])) {
+                                    $results[$a->w]['tfidf'] = 0;
+                                }
+                                if(isset($a->idf)
+                                    && $a->idf != 1
+                                    && (!key_exists('idf', $results[$a->w]) 
+                                    || (key_exists('idf', $results[$a->w]) && $a->idf < $results[$a->w]['idf']))) {
+                                        
+                                        $results[$a->w]['idf'] = $a->idf;
+                                } else if($total_texts < 2000 && $results[$a->w]['idf'] == 1 && $results[$a->w]['tfidf'] > 1) {
+                                    $search = '%' . $a->w . '%';
+                                    $document_count = $request->user()->texts()->where('language_id', '=', $text['language_id'])->whereRaw('lower(original_text) like (?)',["{$search}"])->count();
+                                    $a->idf = log($total_documents/$document_count, 10);
                                     $results[$a->w]['idf'] = $a->idf;
-                            } else {
-                                $results[$a->w]['idf'] = 1;
-                            }
-                            $results[$a->w]['tfidf'] = $results[$a->w]['tf'] * $results[$a->w]['idf'];
-                            if($limit && $results[$a->w]['idf'] < $limit) {
-                                unset($results[$a->w]);
-                            }
-                        } else if(key_exists($a->w, $results)) {
-                            $results[$a->w]['freq'] += $a->freq;
-                            $results[$a->w]['tf'] += $a->tf;
-                            if(!key_exists('tfidf', $results[$a->w])) {
-                                $results[$a->w]['tfidf'] = 0;
-                            }
-                            if(isset($a->idf)
-                                && $a->idf != 1
-                                && (!key_exists('idf', $results[$a->w]) 
-                                || (key_exists('idf', $results[$a->w]) && $a->idf < $results[$a->w]['idf']))) {
-                                    
-                                    $results[$a->w]['idf'] = $a->idf;
-                            } else if($total_texts < 2000 && $results[$a->w]['idf'] == 1 && $results[$a->w]['tfidf'] > 1) {
-                                $search = '%' . $a->w . '%';
-                                $document_count = $request->user()->texts()->where('language_id', '=', $text['language_id'])->whereRaw('lower(original_text) like (?)',["{$search}"])->count();
-                                $a->idf = log($total_documents/$document_count, 10);
-                                $results[$a->w]['idf'] = $a->idf;
-                            }
-                            $results[$a->w]['tfidf'] = $results[$a->w]['tf'] * $results[$a->w]['idf'];
-                            if($limit && $results[$a->w]['idf'] < $limit) {
-                                unset($results[$a->w]);
+                                }
+                                $results[$a->w]['tfidf'] = $results[$a->w]['tf'] * $results[$a->w]['idf'];
+                                if($limit && $results[$a->w]['idf'] < $limit) {
+                                    unset($results[$a->w]);
+                                }
                             }
                         }
                     }
