@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ApiKey;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -35,9 +36,14 @@ class ApiKeyController extends Controller
     {
         $user = $request->user();
         if($user) {
-            $apiKey = $user->apiKeys()->find($id);
-            $apiKey->update($request->all());
-            return response()->json(['success' => 'API raktas atnaujintas']);
+            $query = $user->apiKeys()->where('name', '=', $request['name'])->where('id', '!=', $id)->first();
+            if($query == null) {
+                $apiKey = $user->apiKeys()->find($id);
+                $apiKey->update($request->all());
+                return response()->json(['success' => 'API raktas atnaujintas']);
+            } else {
+                return response()->json(['error' => 'API rakto pavadinimas turi būti unikalus']);
+            }
         } else {
             return redirect('/login');
         }
@@ -72,8 +78,12 @@ class ApiKeyController extends Controller
                     $index = $i;
                 }
             }
+            $hash = hash('md5', Str::random(60));
+            while(ApiKey::where("hash', '=", $hash) != null) {
+                $hash = hash('md5', Str::random(60));
+            }
             $newKey = $user->apiKeys()->create([
-                'key' => hash('md5', Str::random(60)),
+                'key' => $hash,
                 'name' => 'Sistema ' . ++$index,
             ]);
             return response()->json(['success' => 'API raktas sugeneruotas sėkmingai', 'id' => $newKey->id ]);
