@@ -12,10 +12,11 @@
                     <div class="modal-body">
                             <div class="form-group">
                                 <label for="language-select" class="font-weight-bold">API rakto pavadinimas</label>
-                                <input type="text" class="form-control" name="name" v-model="key.name" placeholder="API rakto pavadinimas" v-bind:class="{ 'is-invalid': submitted && (!$v.key.name.required || !$v.key.name.minLength || !$v.key.name.maxLength) }">
+                                <input type="text" class="form-control" name="name" v-model="key.name" placeholder="API rakto pavadinimas" v-bind:class="{ 'is-invalid': error || (submitted && (!$v.key.name.required || !$v.key.name.minLength || !$v.key.name.maxLength)) }">
                                 <div v-if="submitted && !$v.key.name.required" class="invalid-feedback">Privaloma suvesti API rakto pavadinimą</div>
                                 <div v-else-if="submitted && !$v.key.name.minLength" class="invalid-feedback">API rakto pavadinimas turi būti ilgesnis nei 4 simboliai</div>
                                 <div v-else-if="submitted && !$v.key.name.maxLength" class="invalid-feedback">API rakto pavadinimas turi būti trumpesnis nei 255 simboliai</div>
+                                <div v-if="error" class="invalid-feedback">{{ error }}</div>
                             </div>
                     </div>
                     <div class="modal-footer">
@@ -44,6 +45,7 @@ import { required, minLength, maxLength } from "vuelidate/lib/validators";
                 key: {},
                 submitted: false,
                 busy: false,
+                error: false,
             }
         },
         validations: {
@@ -72,6 +74,7 @@ import { required, minLength, maxLength } from "vuelidate/lib/validators";
                 }
             },
             handleSubmit(e) {
+                this.error = false;
                 this.busy = true;
                 this.submitted = true;
                 var that = this;
@@ -87,6 +90,7 @@ import { required, minLength, maxLength } from "vuelidate/lib/validators";
                     .then(function(response) {
                         that.busy = false;
                         if(response.data.error) {
+                            that.error = response.data.error;
                         } else {
                             $('#editKeyModal').modal('hide');
                             that.$emit('editSuccess', response.data.success);
