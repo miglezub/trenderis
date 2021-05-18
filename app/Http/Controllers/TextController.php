@@ -49,7 +49,7 @@ class TextController extends Controller
             return redirect('/login');
         }
     }
-
+    
     public function filter(Request $request)
     {
         $page = isset($request->page) ? $request->page : 1;
@@ -58,11 +58,11 @@ class TextController extends Controller
         $user = $request->user();
         if($user) {
             $textsQuery =  DB::table('texts')
-                        ->join('text_analysis', 'texts.id', '=', 'text_analysis.text_id')
+                        // ->join('text_analysis', 'texts.id', '=', 'text_analysis.text_id')
                         ->select('texts.*')
                         ->where('texts.user_id', '=', $user->id);
             $textsTotalQuery =  DB::table('texts')
-                        ->join('text_analysis', 'texts.id', '=', 'text_analysis.text_id')
+                        // ->join('text_analysis', 'texts.id', '=', 'text_analysis.text_id')
                         ->select('texts.*')
                         ->where('texts.user_id', '=', $user->id);    
             if($request->date1) {
@@ -78,15 +78,19 @@ class TextController extends Controller
                 $textsTotalQuery->where('api_key_id', '=', $request->key);
             }
             if(!empty($request->keyword)) {
-                $keyword = strip_tags($request->keyword);
-                $keyword = mb_strtolower($keyword);
-                $keyword = str_replace(array('.', ',', "\n", "\t", "\r", "!", "?", ":", ";", "(", ")", "[", "]", "\"", "“", "„", " – "), ' ', $keyword);
-                $keyword2 = json_encode($keyword);
-                $keyword2 = str_replace("\"", '', $keyword);
-                $textsQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
-                $textsQuery->orWhere('results', 'LIKE', "%\"" . $keyword2 . "\"%");
-                $textsTotalQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
-                $textsTotalQuery->orWhere('results', 'LIKE', "%\"" . $keyword2 . "\"%");
+                // $keyword = strip_tags($request->keyword);
+                // $keyword = mb_strtolower($keyword);
+                // $keyword = str_replace(array('.', ',', "\n", "\t", "\r", "!", "?", ":", ";", "(", ")", "[", "]", "\"", "“", "„", " – "), ' ', $keyword);
+                // $keyword2 = json_encode($keyword);
+                // $keyword2 = str_replace("\"", '', $keyword);
+                // $textsQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
+                // $textsQuery->orWhere('results', 'LIKE', "%\"" . $keyword2 . "\"%");
+                // $textsTotalQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
+                // $textsTotalQuery->orWhere('results', 'LIKE', "%\"" . $keyword2 . "\"%");
+                $textsQuery->where('original_text', 'LIKE', "%" . $request->keyword . "%");
+                $textsQuery->orWhere('title', 'LIKE', "%" . $request->keyword . "%");
+                $textsTotalQuery->where('original_text', 'LIKE', "%" . $request->keyword . "%");
+                $textsTotalQuery->orWhere('title', 'LIKE', "%" . $request->keyword . "%");
             }
             $texts = $textsQuery->orderBy('created_at', 'DESC')->groupBy('texts.id')->offset(($page-1) * $limit)->limit($limit)->get()->toArray();
             $total = count($textsTotalQuery->groupBy('texts.id')->get());
@@ -279,7 +283,7 @@ class TextController extends Controller
     {
         // Cache::put('botis_page', 30);
         $user = \App\Models\User::find(1);
-        set_time_limit(500);
+        set_time_limit(1500);
         $ch = curl_init();
         $page = Cache::get('botis_page');var_dump($page);
 
@@ -290,6 +294,7 @@ class TextController extends Controller
 
         $json = json_decode($output, true);
         foreach($json as $text) {
+            var_dump($text['id']);
             if(!$user->texts()->where('title', '=', html_entity_decode($text['title']))->first()) {
                 $newText = $user->texts()->create([
                     'original_text' => html_entity_decode($text['description']),
@@ -297,7 +302,9 @@ class TextController extends Controller
                     'language_id' => 1,
                     'use_idf' => 1,
                     'use_word2vec' => 0,
-                    'created_at' => $text['created_at']
+                    'created_at' => $text['created_at'],
+                    'external_id' => $text['id'],
+                    'api_key_id' => 2
                 ]);
         
                 if($newText) {
@@ -319,7 +326,7 @@ class TextController extends Controller
 
         if($page > 1) {
             Cache::put('botis_page', $page - 1);
-            sleep(10);
+            // sleep(10);
             return redirect()->route('import');
         }
     }
@@ -345,5 +352,10 @@ class TextController extends Controller
                 $limit--;
             // }
         }
+    }
+
+    public function find_synonyms() {
+        $synonyms = new Synonyms(array(7148));
+        $synonyms->getSynonyms();
     }
 }
