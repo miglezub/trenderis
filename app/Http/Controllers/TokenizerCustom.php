@@ -31,7 +31,7 @@ class TokenizerCustom
 
     private function removeStopWords() {
         $content = file_get_contents(__DIR__ . '/../../stopwords' . $this->lang . '.txt');
-        $stopwords = explode(";", $content);
+        $stopwords = explode(';',str_replace(",",';',$content));
         foreach($stopwords as $key => $word) {
             $stopwords[$key] = " " . $word . " ";
         }
