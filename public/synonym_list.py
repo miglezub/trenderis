@@ -7,7 +7,8 @@ if(len(sys.argv) > 1):
     host="localhost",
     user="root",
     password="",
-    database='trenderis'
+    database='trenderis',
+    charset='utf8',
   )
   cursor = mydb.cursor()
 
