@@ -110,6 +110,11 @@ class TextAnalysisController extends Controller
                     $results[$key]['tfidf'] = $results[$key]['tf'];
                 }
             }
+            if($text->use_word2vec) {
+                $synonyms = new Synonyms(array($text->id));
+                $synonyms->trainModel();
+                $synonyms->getSynonyms();
+            }
             if(key_exists('lemma', $results[$key]) && $results[$key]['lemma'] && key_exists($results[$key]['lemma'], $results)) {
                 if(!is_array($results[$results[$key]['lemma']])) {
                     $results[$results[$key]['lemma']] = array();
