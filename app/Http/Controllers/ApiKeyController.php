@@ -58,6 +58,9 @@ class ApiKeyController extends Controller
                 $text->api_key_id = NULL;
                 $text->save();
             }
+            foreach($apiKey->filters as $filter) {
+                $filter->delete();
+            }
             $apiKey->delete();
             return response()->json(['success' => 'API raktas ištrintas']);
         } else {
@@ -79,7 +82,7 @@ class ApiKeyController extends Controller
                 }
             }
             $hash = hash('md5', Str::random(60));
-            while(ApiKey::where("hash', '=", $hash) != null) {
+            while(ApiKey::where("key", "=", $hash)->count() > 0) {
                 $hash = hash('md5', Str::random(60));
             }
             $newKey = $user->apiKeys()->create([
