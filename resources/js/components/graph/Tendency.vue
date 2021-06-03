@@ -43,14 +43,14 @@
                 yAxes: [{
                     id: 'freq',
                     type: 'linear',
-                    position: 'left',
+                    position: 'right',
                     ticks: {
                         min: 0
                     }
                 }, {
                     id: 'tfidf',
                     type: 'linear',
-                    position: 'right',
+                    position: 'left',
                     ticks: {
                         min: 0
                     }
@@ -79,7 +79,7 @@
         date.setHours(0);
         date.setMinutes(0);
         date.setSeconds(0);
-        var filter = {dates: [date, ""], type: 1, initial: 1};
+        var filter = {date: date, type: 1, initial: 1};
         this.filterGraph(filter);
     },
     methods: {
@@ -94,17 +94,25 @@
             this.tfidf = [];
             var date1;
             var date2;
-            if(!filter.dates[0]) {
-                date1 = "";
-            } else {
+            if(filter.type == 1) {
                 date1 = new Date()
-                date1.setTime(filter.dates[0].getTime() + 3600 * 1000 * 3);
-            }
-            if(!filter.dates[1]) {
-                filter.dates[1] = "";
-            } else {
+                date1.setTime(filter.date.getTime() + 3600 * 1000 * 3);
                 date2 = new Date()
-                date2.setTime(filter.dates[1].getTime() + 3600 * 1000 * 27 - 1);
+                date2.setTime(filter.date.getTime() + 3600 * 1000 * 26 + 3599 * 1000);
+            } else {
+                console.log("show");
+                if(!filter.dates[0]) {
+                    date1 = "";
+                } else {
+                    date1 = new Date()
+                    date1.setTime(filter.dates[0].getTime() + 3600 * 1000 * 3);
+                }
+                if(!filter.dates[1]) {
+                    filter.dates[1] = "";
+                } else {
+                    date2 = new Date()
+                    date2.setTime(filter.dates[1].getTime() + 3600 * 1000 * 27 - 1);
+                }
             }
             this.axios
                 .get('/api/filterGraph', {
@@ -129,9 +137,9 @@
                     if(filter.type == 1) {
                         response.data.results.forEach(function(result) {
                             that.labels.push(result.w);
-                            that.freq.push(parseFloat(result.tf).toFixed(4));
+                            that.freq.push(parseFloat(result.tf).toFixed(2));
                             if(result.tfidf) {
-                                that.tfidf.push(parseFloat(result.tfidf).toFixed(4));
+                                that.tfidf.push(parseFloat(result.tfidf).toFixed(2));
                             } else {
                                 that.tfidf.push(result.tf);
                             }
@@ -140,7 +148,7 @@
                         response.data.results.forEach(function(result) {
                             that.labels.push(result.date);
                             that.freq.push(result.total);
-                            that.tfidf.push(parseFloat(result.tfidf).toFixed(4));
+                            that.tfidf.push(parseFloat(result.tfidf).toFixed(2));
                         });
                     }
 
@@ -159,7 +167,7 @@
                                 label: 'TF',
                                 yAxisID: 'freq',
                                 data: that.freq,
-                                backgroundColor: "#F26D3D98"
+                                backgroundColor: "#F26D3D98",
                             },
                             {
                                 type: 'line',
