@@ -46,6 +46,10 @@ class User extends Authenticatable
         return $this->hasMany(Text::class);
     }
 
+    public function textIds() {
+        return $this->hasMany(Text::class)->select('id');
+    }
+
     public function apiKeys()
     {
         return $this->hasMany(ApiKey::class);
