@@ -21,6 +21,7 @@ class GraphFilterController extends Controller
     }
 
     public function filter(Request $request) {
+        set_time_limit(0);
         $start = microtime(true);
         $user = $request->user();
         if($user && isset($request->type)) {
@@ -127,20 +128,21 @@ class GraphFilterController extends Controller
             $textsQuery->whereDate('created_at', '<=', $request->date2);
         }
         if(!empty($request->api_key)) {
-            $key = ApiKey::all()->where('key', '=', $request->api_key)->first();
-            if($key) {
-                $textsQuery->where('api_key_id', '=', $key->id);
-            }
+            $textsQuery->where('api_key_id', '=', $request->api_key);
         }
         $texts = $textsQuery->get()->toArray();
-        return $this->getResults($texts, $request);
+        if(count($texts) > 0) {
+            return $this->getResults($texts, $request);
+        } else {
+            return array('total' => 0, 'results' => array());
+        }
     }
 
     private function filterKeyword(Request $request) {
         $user = $request->user();
         $textsQuery =  DB::table('texts')
-                        ->join('text_analysis', 'texts.id', '=', 'text_analysis.text_id')
                         ->select(DB::raw('DATE(texts.created_at) as created_at'), 'text_analysis.results')
+                        ->join('text_analysis', 'texts.id', '=', 'text_analysis.text_id')
                         ->where('texts.user_id', '=', $user->id);
         if(!empty($request->date1)) {
             $textsQuery->whereDate('texts.created_at', '>=', $request->date1);
@@ -156,10 +158,11 @@ class GraphFilterController extends Controller
             $keyword = strip_tags($request->keyword);
             $keyword = mb_strtolower($keyword);
             $keyword = str_replace(array('.', ',', "\n", "\t", "\r", "!", "?", ":", ";", "(", ")", "[", "]", "\"", "“", "„", " – "), ' ', $keyword);
-            $keyword2 = json_encode($keyword);
-            $keyword2 = str_replace("\"", '', $keyword);
-            $textsQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
-            $textsQuery->orWhere('results', 'LIKE', "%\"" . $keyword2 . "\"%");
+            // $keyword2 = json_encode($keyword);
+            // $keyword2 = str_replace("\"", '', $keyword);
+            // $textsQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
+            // $textsQuery->orWhere('results', 'LIKE', "%\"" . $keyword2 . "\"%");
+            $textsQuery->where('original_text', 'LIKE', "%" . $keyword . "%");
         }
         $texts = $textsQuery->orderBy('texts.id', 'ASC')
                 ->orderBy('text_analysis.id', 'desc')
@@ -201,8 +204,21 @@ class GraphFilterController extends Controller
 
     private function getResults($texts, $request, $limit = 1) {
         $results = array();
-        $total_documents = $request->user()->texts()->count();
         $total_texts = count($texts);
+        $total_query = $request->user()->textIds();
+        if($request->api_key) {
+            $total_query->where('api_key_id', '=', $request->api_key);
+        }
+        $total_query->where('language_id', '=', $texts[0]['language_id']);
+        $total_query->limit(3000)->orderBy('id', 'DESC');
+        $total_ids = $total_query->pluck('id')->toArray();
+        $total_documents = count($total_ids);
+        $total_documents = $total_query->count();
+        if($total_documents / 4 > 3000) {
+            $total_documents = 3000;
+        } else {
+            $total_documents = (int) $total_documents / 4;
+        }
         foreach($texts as $text) {
             $analysis = \App\Models\TextAnalysis::where('text_id', '=', $text['id'])->orderBy('id', 'DESC')->take(1)->get()->last();
             if($analysis && isset($analysis->results)) {
@@ -239,11 +255,13 @@ class GraphFilterController extends Controller
                                     || (key_exists('idf', $results[$a->w]) && $a->idf < $results[$a->w]['idf']))) {
                                         
                                         $results[$a->w]['idf'] = $a->idf;
-                                } else if($total_texts < 2000 && $results[$a->w]['idf'] == 1 && $results[$a->w]['tfidf'] > 1) {
+                                } else if($results[$a->w]['idf'] == 1 && $results[$a->w]['tfidf'] > ($total_texts / 35)) {
                                     $search = '%' . $a->w . '%';
-                                    $document_count = $request->user()->texts()->where('language_id', '=', $text['language_id'])->whereRaw('lower(original_text) like (?)',["{$search}"])->count();
-                                    $a->idf = log($total_documents/$document_count, 10);
-                                    $results[$a->w]['idf'] = $a->idf;
+                                    $document_count = $request->user()->texts()->whereIn('id', $total_ids)->where('language_id', '=', $text['language_id'])->whereRaw('lower(original_text) like (?)',["{$search}"])->count();
+                                    if($document_count > 0) {
+                                        $a->idf = log($total_documents/$document_count, 10);
+                                        $results[$a->w]['idf'] = $a->idf;
+                                    }
                                 }
                                 $results[$a->w]['tfidf'] = $results[$a->w]['tf'] * $results[$a->w]['idf'];
                                 if($limit && $results[$a->w]['idf'] < $limit) {
