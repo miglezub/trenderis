@@ -46,7 +46,7 @@ class AnalyseAsyncListener implements ShouldQueue
             ]);
             if($analysis) {
                 $analysisController = new TextAnalysisController();
-                $results = $analysisController->analyse($analysis->id, $event->api_request->user_id);
+                $results = $analysisController->analyse($analysis->id, $event->api_request->user_id, 50, $text['api_key_id']);
                 if($results) {
                     $text->update(['api_request_id' => null]);
                     $res[] = $results;
