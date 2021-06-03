@@ -18,7 +18,21 @@
                         </select>
                         <div v-if="submitted && (!$v.filter.type.required || !$v.filter.type.minValue)" class="invalid-feedback">Privaloma nurodyti grafiko tipą</div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" v-show="filter.type == 1">
+                        <label for="date-select" class="font-weight-bold">Data</label>
+                        <date-picker 
+                            v-model="filter.date" 
+                            type="date" 
+                            placeholder="Nurodykite datą"
+                            :disabled-date="disabledTomorrowAndLater"
+                            class="d-block w-100"
+                            id="date-select"
+                            :clearable="false"
+                            v-bind:class="{ 'is-invalid': submitted && !$v.filter.date.required  }">
+                        </date-picker>
+                        <div v-if="submitted && (!$v.filter.date.required)" class="invalid-feedback">Privaloma nurodyti datą</div>
+                    </div>
+                    <div class="form-group" v-show="filter.type == 2">
                         <label for="date-select" class="font-weight-bold">Datos</label>
                         <date-picker 
                             v-model="filter.dates" 
@@ -28,17 +42,39 @@
                             @pick="handlePick"
                             class="d-block w-100"
                             id="date-select"
+                            :clearable="false"
                             v-bind:class="{ 'is-invalid': submitted && !$v.filter.dates.required  }">
+                            <template v-slot:footer="{ emit }">
+                                <div style="text-align: left">
+                                    <button class="mx-btn mx-btn-text" @click="selectLastSevenDays(emit, 1)">
+                                    Paskutinė savaitė
+                                    </button>
+                                </div>
+                                <div style="text-align: left">
+                                    <button class="mx-btn mx-btn-text" @click="selectLastSevenDays(emit, 2)">
+                                    Paskutinės 2 savaitės
+                                    </button>
+                                </div>
+                                <div style="text-align: left">
+                                    <button class="mx-btn mx-btn-text" @click="selectLastSevenDays(emit, 3)">
+                                    Paskutinės 3 savaitės
+                                    </button>
+                                </div>
+                                <div style="text-align: left">
+                                    <button class="mx-btn mx-btn-text" @click="selectLastSevenDays(emit, 4)">
+                                    Paskutinis mėnuo
+                                    </button>
+                                </div>
+                            </template>
                         </date-picker>
-                        <div v-if="submitted && (!$v.filter.dates.required)" class="invalid-feedback">Privaloma nurodyti datas arba API raktą</div>
+                        <div v-if="submitted && (!$v.filter.dates.required)" class="invalid-feedback">Privaloma nurodyti datas</div>
                     </div>
                     <div class="form-group">
                         <label for="key-select" class="font-weight-bold">API raktas</label>
-                        <select class="custom-select" id="key-select" v-model="filter.key" v-bind:class="{ 'is-invalid': submitted && !$v.filter.key.required }">
-                            <option value="" disabled>Pasirinkite API raktą</option>
+                        <select class="custom-select" id="key-select" v-model="filter.key">
+                            <option value="">Pasirinkite API raktą</option>
                             <option :value="key.id" v-for="key in keys" :key="key.id">{{ key.name }}</option>
                         </select>
-                        <div v-if="submitted && (!$v.filter.key.required)" class="invalid-feedback">Privaloma nurodyti datas arba API raktą</div>
                     </div>
                     <div class="form-group" v-if="filter.type == 2">
                         <label class="font-weight-bold">Raktažodis</label>
@@ -76,6 +112,7 @@ export default {
             filter: {
                 type: "",
                 dates: [],
+                date: "",
                 key: "",
                 keyword: "",
                 initial: 0
@@ -102,12 +139,12 @@ export default {
                 },
                 dates: {
                     required: requiredIf(function (filter) {
-                        return filter.type == 1 && (filter.key == "");
+                        return filter.type == 2;
                     })
                 },
-                key: {
+                date: {
                     required: requiredIf(function (filter) {
-                        return filter.type == 1 && ((filter.dates).length < 1 || filter.dates[0] == null);
+                        return filter.type == 1;
                     })
                 }
             }
@@ -156,7 +193,14 @@ export default {
                 this.filter.dates[0] = new Date(newDate.getTime() + 30 * 24 * 3600 * 1000);
                 this.filter.dates[1] = new Date(newDate.getTime() + 30 * 24 * 3600 * 1000);
             }
-        }
+        },
+        selectLastSevenDays(emit, weeks) {
+            const start = new Date();
+            const end = new Date();
+            start.setTime(end.getTime() - 7 * weeks * 24 * 3600 * 1000);
+            const date = [start, end];
+            emit(date);
+        },
     }
 }
 </script>
