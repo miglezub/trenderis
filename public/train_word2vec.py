@@ -24,6 +24,9 @@ if(os.path.exists("../word2vec")):
   model = gensim.models.Word2Vec.load("../word2vec")
 for text in myresult:
   t = text[1].lower();
+  t = str(t).replace(",", "")
+  t = str(t).replace(":", "")
+  t = str(t).replace("-", "")
   sentences = re.split(r' *[\.\?!][\'"\)\]]* *', str(t))
   sentences_split = []
   for s in sentences:
