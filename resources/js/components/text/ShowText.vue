@@ -1,8 +1,8 @@
 <template>
-    <div class="card">
+    <div class="card show-text">
         <h4 class="card-header">
             Teksto analizės rezultatai
-            <router-link :to="{name: 'texts'}" class="btn btn-danger float-right">Atgal</router-link>
+            <router-link :to="{name: 'texts', params: {page: page, date: date, keyword: keyword, key: key }}" class="btn btn-danger float-right">Atgal</router-link>
         </h4>
         <div class="card-body row">
             <div class="col-md-12">
@@ -20,7 +20,6 @@
                     :items="results"
                     :fields="fields"
                     sticky-header='700px'
-                    style="clear: both; height: 700px;"
                     :busy.sync="isBusy"
                     :sort-by.sync="sortBy"
                     :sort-desc.sync="sortDesc"
@@ -36,7 +35,7 @@
                         </div>
                     </template>
                     <template v-slot:cell(value.w)="data">
-                        <span v-b-tooltip.hover.html="getTitle(data.item.value)" v-if="data.item.value.incl || data.item.value.lemma">
+                        <span v-b-tooltip.hover.html="getTitle(data.item.value)" v-if="data.item.value.incl || data.item.value.lemma || data.item.value.syn">
                             <b v-if="data.item.value.incl">{{ data.item.value.w }}</b>
                             <span v-else>{{ data.item.value.w }}</span>
                         </span>
@@ -102,6 +101,10 @@
                 sortBy: 'value.tf',
                 sortDesc: true,
                 busyAnalysis: false,
+                page: 1,
+                date: [],
+                keyword: "",
+                key: "",
                 fields: [
                     {
                         key: 'value.w',
@@ -131,6 +134,18 @@
             fetchData() {
                 this.isBusy = true;
                 var that = this;
+                if(this.$route.params.page) {
+                    this.page = this.$route.params.page;
+                }
+                if(this.$route.params.date) {
+                    this.date = this.$route.params.date;
+                }
+                if(this.$route.params.keyword) {
+                    this.keyword = this.$route.params.keyword;
+                }
+                if(this.$route.params.key) {
+                    this.key = this.$route.params.key;
+                }
                 if(!this.$route || !this.$route.params.id) {
                     this.$router.push({ name: 'texts' });
                 } else {
@@ -140,7 +155,7 @@
                             this.text = res.data.text;
                             if(res.data.results) {
                                 that.initializeIdfFields();
-                                this.results = Object.entries(res.data.results).map(([key, value]) => ({key,value}));
+                                that.results = Object.entries(res.data.results).map(([key, value]) => ({key,value}));
                             }
                             // if(this.languages.length == 0) {
                                 this.loadLanguages();
@@ -148,7 +163,8 @@
                             this.isBusy = false;
                         })
                         .catch(function (error) {
-                            if(error.response.status == 401) {
+                            console.log(error);
+                            if(error.response && error.response.status == 401) {
                                 window.location = "/login";
                             } else {
                                 $('#errorMessage').modal('show');
@@ -157,18 +173,23 @@
                 }
             },
             loadLanguages() {
-                this.axios
-                    .get('/api/languages')
-                    .catch(function (error) {
-                        if(error.response.status == 401) {
-                            window.location = "/login";
-                        } else {
-                            $('#errorMessage').modal('show');
-                        }
-                    })
-                    .then(response => {
-                        this.languages = response.data;
-                    });
+                if (localStorage.languages) {
+                    this.languages = JSON.parse(localStorage.languages);
+                } else {
+                    this.axios
+                        .get('/api/languages')
+                        .catch(function (error) {
+                            if(error.response.status == 401) {
+                                window.location = "/login";
+                            } else {
+                                $('#errorMessage').modal('show');
+                            }
+                        })
+                        .then(response => {
+                            this.languages = response.data;
+                            localStorage.languages = JSON.stringify(response.data);
+                        });
+                }
             },
             analyse() {
                 this.busyAnalysis = true;
@@ -238,6 +259,17 @@
                 }
                 if(item.incl) {
                     result += "Įtraukti žodžiai: " + item.incl.join(', ');
+                }
+                if(item.syn) {
+                    result += "<br>";
+                    var arr = item.syn.split('(');
+                    var synonyms = "";
+                    var i;
+                    for (i = 1; i < arr.length; i++) {
+                        var a = arr[i].substring(arr[i].indexOf("'") + 1, arr[i].lastIndexOf("'"));
+                        synonyms += (a.replace(",", "") + ", ");
+                    }
+                    result += "Sinonimai: " + synonyms.slice(0, -2);
                 }
                 return result;
             },
