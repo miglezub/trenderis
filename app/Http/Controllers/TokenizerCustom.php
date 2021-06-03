@@ -17,14 +17,14 @@ class TokenizerCustom
     {
         $this->text = strip_tags($this->text);
         $this->text = mb_strtolower($this->text);
-        $this->text = str_replace(array('.', ',', "\n", "\t", "\r", "!", "?", ":", ";", "(", ")", "[", "]", "\"", "“", "„", " – ", "#", "—", "…", "”", "”", "-"), ' ', $this->text);
+        $this->text = str_replace(array('.', ',', "\n", "\t", "\r", "!", "?", ":", ";", "(", ")", "[", "]", "\"", "“", "„", " – ", "#", "—", "…", "”", "”", "-","/","\\"), ' ', $this->text);
         $this->removeStopWords();
         $this->text = preg_replace("/[\s]+/mu", " ", $this->text);
         $tokenized = explode(" ", $this->text);
         return array_filter(
             $tokenized,
             function ($value) {
-                return strlen($value) > 1;
+                return strlen($value) > 1 && !is_numeric($value);
             }
         );
     }
