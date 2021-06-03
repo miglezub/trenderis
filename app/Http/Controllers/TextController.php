@@ -52,6 +52,7 @@ class TextController extends Controller
     
     public function filter(Request $request)
     {
+        set_time_limit(0);
         $page = isset($request->page) ? $request->page : 1;
         $limit = isset($request->limit) ? $request->limit : 10;
 
@@ -64,36 +65,54 @@ class TextController extends Controller
             $textsTotalQuery =  DB::table('texts')
                         // ->join('text_analysis', 'texts.id', '=', 'text_analysis.text_id')
                         ->select('texts.*')
-                        ->where('texts.user_id', '=', $user->id);    
+                        ->where('texts.user_id', '=', $user->id);  
+            $filter = false;
             if($request->date1) {
                 $textsQuery->whereDate('texts.created_at', '>=', $request->date1);
                 $textsTotalQuery->whereDate('texts.created_at', '>=', $request->date1);
+                $filter = true;
             }
             if($request->date2) {
                 $textsQuery->whereDate('texts.created_at', '<=', $request->date2);
                 $textsTotalQuery->whereDate('texts.created_at', '<=', $request->date2);
+                $filter = true;
             }
             if($request->key) {
                 $textsQuery->where('api_key_id', '=', $request->key);
                 $textsTotalQuery->where('api_key_id', '=', $request->key);
+                $filter = true;
             }
             if(!empty($request->keyword)) {
-                // $keyword = strip_tags($request->keyword);
-                // $keyword = mb_strtolower($keyword);
-                // $keyword = str_replace(array('.', ',', "\n", "\t", "\r", "!", "?", ":", ";", "(", ")", "[", "]", "\"", "“", "„", " – "), ' ', $keyword);
+                $keyword = strip_tags($request->keyword);
+                $keyword = mb_strtolower($keyword);
+                $keyword = str_replace(array('.', ',', "\n", "\t", "\r", "!", "?", ":", ";", "(", ")", "[", "]", "\"", "“", "„", " – "), ' ', $keyword);
                 // $keyword2 = json_encode($keyword);
                 // $keyword2 = str_replace("\"", '', $keyword);
                 // $textsQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
                 // $textsQuery->orWhere('results', 'LIKE', "%\"" . $keyword2 . "\"%");
                 // $textsTotalQuery->where('results', 'LIKE', "%\"" . $keyword . "\"%");
                 // $textsTotalQuery->orWhere('results', 'LIKE', "%\"" . $keyword2 . "\"%");
-                $textsQuery->where('original_text', 'LIKE', "%" . $request->keyword . "%");
-                $textsQuery->orWhere('title', 'LIKE', "%" . $request->keyword . "%");
-                $textsTotalQuery->where('original_text', 'LIKE', "%" . $request->keyword . "%");
-                $textsTotalQuery->orWhere('title', 'LIKE', "%" . $request->keyword . "%");
+                $textsQuery->whereNested(function($textsQuery) use ($keyword) {
+                    $textsQuery->where('original_text', 'LIKE', "%" . $keyword . "%");
+                    $textsQuery->orWhere('title', 'LIKE', "%" . $keyword . "%");
+                });
+                $textsTotalQuery->whereNested(function($textsTotalQuery) use ($keyword) {
+                    $textsTotalQuery->where('original_text', 'LIKE', "%" . $keyword . "%");
+                    $textsTotalQuery->orWhere('title', 'LIKE', "%" . $keyword . "%");
+                });
+                $filter = true;
             }
+            // var_dump($textsQuery->toSql());
             $texts = $textsQuery->orderBy('created_at', 'DESC')->groupBy('texts.id')->offset(($page-1) * $limit)->limit($limit)->get()->toArray();
-            $total = count($textsTotalQuery->groupBy('texts.id')->get());
+            if(!$filter) {
+                $total = Cache::get('total' . $user->id);
+                if(!$total) {
+                    $total = count($textsTotalQuery->groupBy('texts.id')->get());
+                    Cache::put('total' . $user->id, $total);
+                }
+            } else {
+                $total = count($textsTotalQuery->groupBy('texts.id')->get());
+            }
             foreach($texts as $key => $text) {
                 if(strlen($text->title) == 0) {
                     if(strlen($text->original_text) > 150) {
@@ -191,6 +210,7 @@ class TextController extends Controller
                 ->where('date_to', '>=', $text['created_at']->format('Y-m-d'))
                 ->delete();
             $text->delete();
+            Cache::forget('total' . $user->id);
             return response()->json(['success' => 'Tekstas ištrintas']);
         } else {
             return redirect('/login');
@@ -199,6 +219,7 @@ class TextController extends Controller
 
     public function store(Request $request)
     {
+        set_time_limit(0);
         if($request->user()) {
             $data = request()->validate([
                 'title' => 'nullable',
@@ -228,7 +249,8 @@ class TextController extends Controller
                     'use_word2vec' => $data['use_word2vec']
                 ]);
                 $analysisController = new TextAnalysisController();
-                $analysisController->analyse($analysis->id, auth()->user()->id);
+                $analysisController->analyse($analysis->id, auth()->user()->id, 40, null, 1000);
+                Cache::forget('total' . $request->user()->id);
                 return response()->json(['success' => 'Tekstas pridėtas sėkmingai', 'id' => $newText->id ]);
             } else {
                 return response()->json(['error' => 'Klaida']);
@@ -240,7 +262,7 @@ class TextController extends Controller
 
     public function analyse($id, Request $request)
     {
-        set_time_limit(150);
+        set_time_limit(0);
         $user = $request->user();
         if($user) {
             $text = $user->texts()->find($id);
@@ -257,7 +279,7 @@ class TextController extends Controller
                     'use_word2vec' => $text->use_word2vec
                 ]);
                 $analysisController = new TextAnalysisController();
-                $analysisController->analyse($analysis->id, $user->id);
+                $analysisController->analyse($analysis->id, $user->id, 40, isset($text->api_key_id) ? $text->api_key_id : null, 1000 );
                 return response()->json(['success' => 'Analizes rezultatai atnaujinti.']);
             } else {
                 return response()->json(['error' => 'Klaida']);
@@ -281,7 +303,7 @@ class TextController extends Controller
 
     public function import()
     {
-        // Cache::put('botis_page', 30);
+        // Cache::put('botis_page', 15);
         $user = \App\Models\User::find(1);
         set_time_limit(1500);
         $ch = curl_init();
@@ -295,7 +317,7 @@ class TextController extends Controller
         $json = json_decode($output, true);
         foreach($json as $text) {
             var_dump($text['id']);
-            if(!$user->texts()->where('title', '=', html_entity_decode($text['title']))->first()) {
+            if(!$user->texts()->where('title', '=', html_entity_decode($text['title']))->first() && strlen($text['description']) > 0) {
                 $newText = $user->texts()->create([
                     'original_text' => html_entity_decode($text['description']),
                     'title' => html_entity_decode($text['title']),
@@ -319,15 +341,17 @@ class TextController extends Controller
                         'use_word2vec' => 0
                     ]);
                     $analysisController = new TextAnalysisController();
-                    $analysisController->analyse($analysis->id, auth()->user()->id);
+                    $analysisController->analyse($analysis->id, auth()->user()->id, 40, 2, 1000);
+                    Cache::forget('total' . $user->id);
                 }
             }
         }
 
         if($page > 1) {
             Cache::put('botis_page', $page - 1);
-            // sleep(10);
-            return redirect()->route('import');
+            if($page % 5 != 0) {
+                return redirect()->route('import');
+            }
         }
     }
 
@@ -355,7 +379,7 @@ class TextController extends Controller
     }
 
     public function find_synonyms() {
-        $synonyms = new Synonyms(array(7148));
+        $synonyms = new Synonyms(array(10521));
         $synonyms->getSynonyms();
     }
 }
