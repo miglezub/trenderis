@@ -11,6 +11,7 @@ use \App\Events\AsyncAnalysis;
 use App\Models\ApiRequest;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class ApiRequestController extends Controller
 {
@@ -62,6 +63,7 @@ class ApiRequestController extends Controller
     }
 
     public function graph(Request $request) {
+        set_time_limit(0);
         if(!is_bool($msg = $this->auth($request))) {
             $this->logout();
             return response()->json(array('error' => ['key' => $msg], 'status' => 400));
@@ -101,6 +103,7 @@ class ApiRequestController extends Controller
     //id, source, title, description, created_at
     public function addTexts(Request $request)
     {
+        set_time_limit(0);
         if(!is_bool($msg = $this->auth($request))) {
             $this->logout();
             return response()->json(array('error' => ['key' => $msg], 'status' => 400));
@@ -189,6 +192,7 @@ class ApiRequestController extends Controller
                 ->where('date_from', '<=', $created_at)
                 ->where('date_to', '>=', $created_at)
                 ->delete();
+        Cache::forget('total' . $user->id);
         if($analyse && $newText) {
             $analysis = $newText->text_analysis()->create([
                 'results' => '',
@@ -196,7 +200,7 @@ class ApiRequestController extends Controller
                 'use_word2vec' => $word2vec
             ]);
             $analysisController = new TextAnalysisController();
-            $results = $analysisController->analyse($analysis->id, auth()->user()->id, $analyse_limit);
+            $results = $analysisController->analyse($analysis->id, auth()->user()->id, $analyse_limit, $api_key, 1500);
             return $results;
         } else if(!$analyse && $newText) {
             return true;
