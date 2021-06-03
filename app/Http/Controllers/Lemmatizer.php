@@ -48,26 +48,27 @@ class Lemmatizer
         1 => array ( 0 => 'o', 1 => 'u', 2 => 'e', 3 => 'i', ), 
         6 => array ( 0 => 'nesiui', 1 => 'ieniui', 2 => 'nesyje', 3 => 'ienyje', ), 
     );
-    //galvos, vyšnios, saujos, gervės, aikštės, katės, sūnūs, skaičiai, pavojai, avys, dantys (vandenys)
+    //galvos, vyšnios, saujos, gervės, aikštės, katės, sūnūs, skaičiai, pavojai, avys, dantys (vandenys), lėktuvai
     protected $noun_cases_plu = array(
         // 'v' => array('os', 'ios', 'jos', 'ės', 'štės', 'tės', 'ūs', 'iai', 'ai', 'vys', 'ys'),
         //bandom verst i vienaskaita iskart
         //dantis vanduo i vienaskaita blogai
-        'v' => array('a', 'ia', 'ja', 'ė', 'štė', 'tė', 'us', 'ius', 'us', 'vis', 'is'),
-        'k' => array('ų', 'ių', 'jų', 'ių', 'ščių', 'čių', 'ų', 'ių', 'ų', 'vių', 'ų'),
-        'n' => array('oms', 'ioms', 'joms', 'ėms','štėms', 'tėms', 'ums', 'iams', 'ams', 'vims', 'ims'),
-        'g' => array('as', 'ias', 'jas', 'es', 'štes', 'tes', 'us', 'ius', 'us', 'vis', 'is'),
-        'in' => array('omis', 'iomis', 'jomis', 'ėmis', 'štėmis', 'tėmis', 'umis', 'iais', 'ais', 'vimis', 'imis'),
-        'vt' => array('ose', 'iose', 'jose', 'ėse', 'štėse', 'tėse', 'uose', 'iuose', 'uose', 'vyse', 'yse'),
+        'v' => array('a', 'ia', 'ja', 'ė', 'štė', 'tė', 'us', 'ius', 'us', 'vis', 'is', 'vas'),
+        'vd' => array('os', 'ios', 'jos', 'ės', 'štės', 'tės', 'ūs', 'iai', 'ai', 'vys', 'ys', 'vai'),
+        'k' => array('ų', 'ių', 'jų', 'ių', 'ščių', 'čių', 'ų', 'ių', 'ų', 'vių', 'ų', 'vų'), //ų taisyt
+        'n' => array('oms', 'ioms', 'joms', 'ėms','štėms', 'tėms', 'ums', 'iams', 'ams', 'vims', 'ims', 'vams'),
+        'g' => array('as', 'ias', 'jas', 'es', 'štes', 'tes', 'us', 'ius', 'us', 'vis', 'is', 'vus'),
+        'in' => array('omis', 'iomis', 'jomis', 'ėmis', 'štėmis', 'tėmis', 'umis', 'iais', 'ais', 'vimis', 'imis', 'vais'),
+        'vt' => array('ose', 'iose', 'jose', 'ėse', 'štėse', 'tėse', 'uose', 'iuose', 'uose', 'vyse', 'yse','vuose'),
     );
-    protected $noun_endings_plu = array ( 
-        8 => array ( 0 => 'štėmis', ), 
+    protected $noun_endings_plu = array(
+        8 => array ( 0 => 'štėmis', ),
         7 => array ( 0 => 'ščių', 1 => 'štėms', 2 => 'štėse', ), 
-        6 => array ( 0 => 'tėmis', ), 
-        5 => array ( 0 => 'štė', 1 => 'čių', 2 => 'tėms', 3 => 'štes', 4 => 'iomis', 5 => 'jomis', 6 => 'ėmis', 7 => 'vimis', 8 => 'tėse', 9 => 'iuose', ), 
-        4 => array ( 0 => 'vių', 1 => 'ioms', 2 => 'joms', 3 => 'ėms', 4 => 'iams', 5 => 'vims', 6 => 'omis', 7 => 'umis', 8 => 'iais', 9 => 'imis', 10 => 'iose', 11 => 'jose', 12 => 'ėse', 13 => 'uose', 14 => 'vyse', ), 
-        3 => array ( 0 => 'tė', 1 => 'ius', 2 => 'vis', 3 => 'ių', 4 => 'jų', 5 => 'oms', 6 => 'ums', 7 => 'ams', 8 => 'ims', 9 => 'ias', 10 => 'jas', 11 => 'tes', 12 => 'ais', 13 => 'ose', 14 => 'yse', ), 
-        2 => array ( 0 => 'ia', 1 => 'ja', 2 => 'ė', 3 => 'us', 4 => 'is', 5 => 'ų', 6 => 'as', 7 => 'es', ), 
+        6 => array ( 0 => 'štės', 1 => 'tėmis', ), 
+        5 => array ( 0 => 'štė', 1 => 'čių', 2 => 'tėms', 3 => 'štes', 4 => 'iomis', 5 => 'jomis', 6 => 'ėmis', 7 => 'vimis', 8 => 'tėse', 9 => 'iuose', 10 => 'vuose', ), 
+        4 => array ( 0 => 'tės', 1 => 'vių', 2 => 'ioms', 3 => 'joms', 4 => 'ėms', 5 => 'iams', 6 => 'vims', 7 => 'vams', 8 => 'omis', 9 => 'umis', 10 => 'iais', 11 => 'imis', 12 => 'vais', 13 => 'iose', 14 => 'jose', 15 => 'ėse', 16 => 'uose', 17 => 'vyse', ), 
+        3 => array ( 0 => 'tė', 1 => 'ius', 2 => 'vis', 3 => 'vas', 4 => 'ios', 5 => 'jos', 6 => 'ės', 7 => 'ūs', 8 => 'iai', 9 => 'vys', 10 => 'vai', 11 => 'ių', 12 => 'jų', 13 => 'vų', 14 => 'oms', 15 => 'ums', 16 => 'ams', 17 => 'ims', 18 => 'ias', 19 => 'jas', 20 => 'tes', 21 => 'vus', 22 => 'ais', 23 => 'ose', 24 => 'yse', ), 
+        2 => array ( 0 => 'ia', 1 => 'ja', 2 => 'ė', 3 => 'us', 4 => 'is', 5 => 'os', 6 => 'ai', 7 => 'ys', 8 => 'ų', 9 => 'as', 10 => 'es', ), 
         1 => array ( 0 => 'a', ), 
     );
     //sesuo išimtis
@@ -79,9 +80,9 @@ class Lemmatizer
         'ą' => array(
             //vyrą agentūrą???
             //vyrą vėją, streiką, tekstą
-            'mas' => array('r', 'j', 'k', 't'),
-            //galvą saują
-            'fem' => array('v', 'uj')
+            'mas' => array('r', 'ėj', 'k', 't'),
+            //galvą saują gabiją
+            'fem' => array('v', 'uj', 'ij')
         ),
         'į' => array(
             //brolį, gaidį, lokį, dantį, vandenį
@@ -121,13 +122,13 @@ class Lemmatizer
         // var_dump($fem);
         // var_dump($plu);
         
-        if(($fem && $fem['case'] == 'v') || ($mas && $mas['case'] == 'v') || ($plu && $plu['case'] == 'v')) {
+        $max = $this->maxLength(array($mas, $fem, $plu));
+        if(($fem && $fem['case'] == 'v' && $fem['length'] == $max) || ($mas && $mas['case'] == 'v' && $mas['length'] == $max) || ($plu && $plu['case'] == 'v'  && $plu['length'] == $plu)) {
             return false;
         }
-        $max = $this->maxLength(array($mas, $fem, $plu));
         $lemma = false;
-        if($fem && $mas && $fem['length'] == $max && $mas['length'] == $max) {
-            if(!$this->getGender($word)) {
+        if($fem && $mas && ($fem['length'] == $max || $mas['length'] == $max)) {
+            if(!$this->getGender($word) || $fem['length'] > $mas['length']) {
                 $lemma = $fem['lemma'];
             } else {
                 $lemma = $mas['lemma'];
@@ -194,7 +195,7 @@ class Lemmatizer
     public function formEndings()
     {
         $endings = array();
-        foreach($this->noun_cases_sing_mas_lt as $case) {
+        foreach($this->noun_cases_plu as $case) {
             foreach($case as $ending) {
                 $endings[] = $ending;
             }
