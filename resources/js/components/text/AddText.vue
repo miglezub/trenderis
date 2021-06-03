@@ -51,6 +51,7 @@
 import Message from '../layout/Message.vue';
 import { required, minValue } from "vuelidate/lib/validators";
     export default {
+        components: { Message },
         data() {
             return {
                 text: {
@@ -66,18 +67,23 @@ import { required, minValue } from "vuelidate/lib/validators";
             }
         },
         created() {
-            this.axios
-                .get('/api/languages')
-                .catch(function (error) {
-                    if(error.response.status == 401) {
-                        window.location = "/login";
-                    } else {
-                        $('#errorMessage').modal('show');
-                    }
-                })
-                .then(response => {
-                    this.languages = response.data;
-                });
+            if (localStorage.languages) {
+                this.languages = JSON.parse(localStorage.languages);
+            } else {
+                this.axios
+                    .get('/api/languages')
+                    .catch(function (error) {
+                        if(error.response.status == 401) {
+                            window.location = "/login";
+                        } else {
+                            $('#errorMessage').modal('show');
+                        }
+                    })
+                    .then(response => {
+                        this.languages = response.data;
+                        localStorage.languages = JSON.stringify(response.data);
+                    });
+            }
         },
         validations: {
             text: {
