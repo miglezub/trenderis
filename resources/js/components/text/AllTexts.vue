@@ -13,6 +13,28 @@
                             class="d-block"
                             input-class="form-control"
                             :disabled-date="disabledTomorrowAndLater">
+                            <template v-slot:footer="{ emit }">
+                                <div style="text-align: left">
+                                    <button class="mx-btn mx-btn-text" @click="selectLastSevenDays(emit, 1)">
+                                    Paskutinė savaitė
+                                    </button>
+                                </div>
+                                <div style="text-align: left">
+                                    <button class="mx-btn mx-btn-text" @click="selectLastSevenDays(emit, 2)">
+                                    Paskutinės 2 savaitės
+                                    </button>
+                                </div>
+                                <div style="text-align: left">
+                                    <button class="mx-btn mx-btn-text" @click="selectLastSevenDays(emit, 3)">
+                                    Paskutinės 3 savaitės
+                                    </button>
+                                </div>
+                                <div style="text-align: left">
+                                    <button class="mx-btn mx-btn-text" @click="selectLastSevenDays(emit, 4)">
+                                    Paskutinis mėnuo
+                                    </button>
+                                </div>
+                            </template>
                         </date-picker>
                     </div>
                     <div class="form-group">
@@ -53,7 +75,7 @@
                 </template>
                 <template v-slot:cell(buttons)="data">
                     <b-button-group class="float-right">
-                        <router-link :to="{name: 'showText', params: { id: data.item.id }}" class="btn btn-primary">Peržiūrėti</router-link>
+                        <router-link :to="{name: 'showText', params: { id: data.item.id, page: currentPage, date: date, keyword: keyword, key: key }}" class="btn btn-primary">Peržiūrėti</router-link>
                         <b-button class="btn btn-danger" @click="triggerDelete(data.item.id)">Ištrinti</b-button>
                     </b-button-group>
                 </template>
@@ -144,7 +166,24 @@
                 ],
             }
         },
-        mounted() {
+        watch: {
+            languages(newLang) {
+                localStorage.languages = newLang;
+            }
+        },
+        created() {
+            if(this.$route.params.page) {
+                this.currentPage = this.$route.params.page;
+            }
+            if(this.$route.params.date) {
+                this.date = this.$route.params.date;
+            }
+            if(this.$route.params.keyword) {
+                this.keyword = this.$route.params.keyword;
+            }
+            if(this.$route.params.key) {
+                this.key = this.$route.params.key;
+            }
             this.fetchData(true);
         },
         computed: {
@@ -234,15 +273,16 @@
             clearFilter() {
                 this.isBusy = true;
                 $('form input, form select').removeClass('is-invalid');
-                this.date[0] = "";
-                this.date[1] = "";
+                this.date = [];
                 this.keyword = "";
                 this.key = "";
-                this.page = 1;
+                this.currentPage = 1;
                 this.fetchData();
             },
             filterList() {
                 this.isBusy = true;
+                this.totalTexts = 0;
+                this.currentPage = 1;
                 var date1 = "";
                 var date2 = "";
                 if(this.date[0]) {
@@ -279,19 +319,25 @@
                     });
             },
             loadLanguages() {
-                this.axios
-                    .get('/api/languages')
-                    .catch(function (error) {
-                        if(error.response.status == 401) {
-                            window.location = "/login";
-                        } else {
-                            $('#errorMessage').modal('show');
-                        }
-                    })
-                    .then(response => {
-                        this.languages = response.data;
-                        this.fetchApiKeys();
-                    });
+                if (localStorage.languages) {
+                    this.languages = JSON.parse(localStorage.languages);
+                    this.fetchApiKeys();
+                } else {
+                    this.axios
+                        .get('/api/languages')
+                        .catch(function (error) {
+                            if(error.response.status == 401) {
+                                window.location = "/login";
+                            } else {
+                                $('#errorMessage').modal('show');
+                            }
+                        })
+                        .then(response => {
+                            this.languages = response.data;
+                            localStorage.languages = JSON.stringify(response.data);
+                            this.fetchApiKeys();
+                        });
+                }
             },
             disabledTomorrowAndLater(date) {
                 const today = new Date();
@@ -313,6 +359,13 @@
                         this.keys = response.data;
                         this.isBusy = false;
                     });
+            },
+            selectLastSevenDays(emit, weeks) {
+                const start = new Date();
+                const end = new Date();
+                start.setTime(end.getTime() - 7 * weeks * 24 * 3600 * 1000);
+                const date = [start, end];
+                emit(date);
             },
         }
     }
