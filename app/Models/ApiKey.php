@@ -26,4 +26,9 @@ class ApiKey extends Model
     {
         return $this->hasMany(Text::class, 'api_key_id');
     }
+
+    public function filters()
+    {
+        return $this->hasMany(GraphFilter::class, 'api_key_id');
+    }
 }
