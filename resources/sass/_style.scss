@@ -524,7 +524,10 @@ svg {
       display: flex;
       flex-direction: column;
       text-align: justify;
-      height: 700px;
+      height: 500px;
+      @include xl {
+        height: 700px;
+    }
       #show-text {
           overflow: auto;
           max-height: 100%;
@@ -738,12 +741,26 @@ svg {
         }
     }
   }
-  #analysis-table {
-    td {
-        &:hover {
-            cursor: pointer;
-        }
-    }
+  .show-text {
+      .b-table-sticky-header {
+          @include xl {
+            height: 700px;
+            max-height: 700px;
+          }
+          height: 500px;
+          max-height: 500px;
+          clear: both;
+          #analysis-table {
+              thead {
+                  max-height: 48px;
+              }
+            td {
+                &:hover {
+                    cursor: pointer;
+                }
+            }
+          }
+      }
   }
   #documentation-table, #text-info-table, #graph-data-table {
       max-width: 1200px;

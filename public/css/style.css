@@ -23867,7 +23867,13 @@ svg {
   display: flex;
   flex-direction: column;
   text-align: justify;
-  height: 700px;
+  height: 500px;
+}
+
+@media (max-width: 1200px) {
+  #jumbotron-container {
+    height: 700px;
+  }
 }
 
 #jumbotron-container #show-text {
@@ -24151,7 +24157,24 @@ table {
   }
 }
 
-#analysis-table td:hover {
+.show-text .b-table-sticky-header {
+  height: 500px;
+  max-height: 500px;
+  clear: both;
+}
+
+@media (max-width: 1200px) {
+  .show-text .b-table-sticky-header {
+    height: 700px;
+    max-height: 700px;
+  }
+}
+
+.show-text .b-table-sticky-header #analysis-table thead {
+  max-height: 48px;
+}
+
+.show-text .b-table-sticky-header #analysis-table td:hover {
   cursor: pointer;
 }
 
